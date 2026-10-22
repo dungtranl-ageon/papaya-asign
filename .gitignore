@@ -1,0 +1,17 @@
+# Security & Secrets (Zero Secret Leaks)
+**/mcp_config.json
+.env
+.env.*
+*.key
+*.pem
+
+# Dependencies & Build
+node_modules/
+dist/
+build/
+
+# OS & Temp
+.DS_Store
+Thumbs.db
+*.log
+scratch/

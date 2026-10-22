@@ -1,0 +1,12 @@
+{
+  "name": "papaya-pumpkin",
+  "description": "Papaya Insurtech plugins & skills for Claude Code",
+  "version": "2.0.0",
+  "plugins": [
+    {
+      "name": "linear",
+      "source": "./plugins/linear",
+      "description": "Scripts-first Linear issue-tracker workflow: pick tasks, link sessions, upload plans, log bugs, and auto-transition issues on PR events."
+    }
+  ]
+}

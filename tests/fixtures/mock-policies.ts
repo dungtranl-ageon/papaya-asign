@@ -82,3 +82,79 @@ export const mockSilverPolicy: Policy = {
     },
   ],
 };
+
+export const mockBronzePolicy: Policy = {
+  policyNumber: 'POL-BRONZE-55441',
+  insuredName: 'Le Van C',
+  nationalId: '048200112233',
+  planName: 'Healthcare Bronze',
+  status: 'ACTIVE',
+  effectiveDate: '2026-01-01T00:00:00Z',
+  expiryDate: '2026-12-31T23:59:59Z',
+  annualTotalLimit: 100000000,
+  annualUsedAmount: 10000000,
+  waitingPeriods: {
+    PRE_EXISTING: 365,
+    SPECIAL_DISEASE: 180,
+  },
+  exclusions: ['K21', 'M54.5', 'Q21'],
+  benefits: [
+    {
+      category: 'INPATIENT',
+      maxLimitPerClaim: 15000000,
+      maxLimitPerYear: 50000000,
+      copayRate: 0.3, // 30% copay
+      subLimitPerDay: 1000000,
+    },
+    {
+      category: 'SURGERY',
+      maxLimitPerClaim: 30000000,
+      maxLimitPerYear: 60000000,
+      copayRate: 0.3, // 30% copay
+    },
+    {
+      category: 'MEDICATION',
+      maxLimitPerClaim: 5000000,
+      maxLimitPerYear: 20000000,
+      copayRate: 0.3, // 30% copay
+    },
+  ],
+};
+
+export const mockPlatinumPolicy: Policy = {
+  policyNumber: 'POL-PLATINUM-88888',
+  insuredName: 'Dang Thi D',
+  nationalId: '001199554433',
+  planName: 'Healthcare Platinum VIP',
+  status: 'ACTIVE',
+  effectiveDate: '2026-01-01T00:00:00Z',
+  expiryDate: '2026-12-31T23:59:59Z',
+  annualTotalLimit: 1000000000, // 1 Billion VND
+  annualUsedAmount: 0,
+  waitingPeriods: {
+    PRE_EXISTING: 180,
+    SPECIAL_DISEASE: 90,
+  },
+  exclusions: ['Z41.1'],
+  benefits: [
+    {
+      category: 'INPATIENT',
+      maxLimitPerClaim: 100000000,
+      maxLimitPerYear: 500000000,
+      copayRate: 0.0, // 0% copay - 100% covered
+      subLimitPerDay: 5000000,
+    },
+    {
+      category: 'SURGERY',
+      maxLimitPerClaim: 100000000,
+      maxLimitPerYear: 400000000,
+      copayRate: 0.0, // 0% copay
+    },
+    {
+      category: 'MEDICATION',
+      maxLimitPerClaim: 30000000,
+      maxLimitPerYear: 100000000,
+      copayRate: 0.0, // 0% copay
+    },
+  ],
+};

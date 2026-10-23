@@ -206,5 +206,83 @@ describe('Algorithm 1: Boundary Value Analysis (BVA) Test Suite', () => {
       expect(result.breakdown[0]?.payableAmount).toBe(5000000);
       expect(result.totalDeductions).toBe(0);
     });
+
+    it('BVA-11: High Copay Boundary (50% Copay on 10,000,000 VND)', async () => {
+      const halfCopayPolicy = {
+        ...mockGoldPolicy,
+        benefits: [
+          {
+            category: 'MEDICATION' as const,
+            maxLimitPerClaim: 20000000,
+            maxLimitPerYear: 50000000,
+            copayRate: 0.5, // 50% copay
+          },
+        ],
+      };
+
+      const result = await calculateBenefit({
+        claimId: 'CLM-BVA-50PCT',
+        items: [
+          {
+            itemId: 'ITM-MED-50',
+            description: 'Specialty Injection',
+            category: 'MEDICATION',
+            amountRequested: 10000000,
+          },
+        ],
+        policy: halfCopayPolicy,
+      });
+
+      expect(result.totalRequested).toBe(10000000);
+      expect(result.totalPayable).toBe(5000000);
+      expect(result.totalDeductions).toBe(5000000);
+      expect(result.totalPayable + result.totalDeductions).toBe(10000000);
+    });
+
+    it('BVA-12: Minimum Positive Requested Amount (1 VND Boundary)', async () => {
+      const result = await calculateBenefit({
+        claimId: 'CLM-BVA-1VND',
+        items: [
+          {
+            itemId: 'ITM-MIN-1',
+            description: 'Micro Administration Fee',
+            category: 'MEDICATION',
+            amountRequested: 1,
+          },
+        ],
+        policy: mockGoldPolicy, // 10% copay
+      });
+
+      expect(result.totalRequested).toBe(1);
+      // Math.round(1 * 0.1) = 0 copay, payable = 1
+      expect(result.totalPayable).toBe(1);
+      expect(result.totalDeductions).toBe(0);
+    });
+
+    it('BVA-13: Multiple Items Summing Exactly to Category Sublimit (25M + 25M = 50M)', async () => {
+      const result = await calculateBenefit({
+        claimId: 'CLM-BVA-SPLIT',
+        items: [
+          {
+            itemId: 'ITM-SURG-A',
+            description: 'Primary Procedure',
+            category: 'SURGERY',
+            amountRequested: 25000000,
+          },
+          {
+            itemId: 'ITM-SURG-B',
+            description: 'Secondary Procedure',
+            category: 'SURGERY',
+            amountRequested: 25000000,
+          },
+        ],
+        policy: mockGoldPolicy, // Surgery: max 50M, 20% copay
+      });
+
+      expect(result.totalRequested).toBe(50000000);
+      // Total 50M is within 50M sublimit. 20% copay on 50M = 10M deductions, 40M payable.
+      expect(result.totalPayable).toBe(40000000);
+      expect(result.totalDeductions).toBe(10000000);
+    });
   });
 });

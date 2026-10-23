@@ -1,14 +1,32 @@
 ---
 name: papaya-tester-senior
 description: >-
-  Use this skill for senior QA leadership, comprehensive test engineering, and audit reporting:
-  designing deterministic test suites for AI workflows, validating the 3 official test cases,
-  hunting edge cases, asserting mathematical correctness, and generating coverage/JUnit reports into test-reports/.
+  Use this skill for senior QA leadership, comprehensive test engineering, and audit reporting.
+  STRICT BOUNDARIES: Forbidden from accessing apps/, forbidden from modifying production .ts/.tsx files,
+  and strictly restricted to operating exclusively within tests/ and test-reports/.
 ---
 
 # Papaya Senior Test Engineer Skill
 
 Skill này đóng vai trò là kim chỉ nam dành cho **Senior QA / Test Automation Lead / Quality Auditor**, đảm bảo tính đúng đắn tuyệt đối, độ tin cậy, an toàn dữ liệu và khả năng tái lập (reproducibility) của hệ thống thẩm định bồi thường trước khi bàn giao hoặc triển khai.
+
+---
+
+## 0. Ranh Giới Quyền Hạn & Bảo Toàn Mã Nguồn (Strict Scope & Access Boundaries)
+
+> [!CAUTION]
+> **RÀNG BUỘC VẬN HÀNH BẮT BUỘC DÀNH CHO SENIOR TESTER:**
+>
+> 1. **CẤM TRUY CẬP VÀO THƯ MỤC `apps/`:**
+>    - Tuyệt đối không được truy cập, đọc ghi hoặc can thiệp vào [apps/](file:///Users/tranquocdung/Projects/papaya-asign/apps) (`apps/web`, `apps/api`).
+> 2. **CẤM THAY ĐỔI CÁC FILE `.tsx`, `.ts` MÃ NGUỒN SẢN PHẨM:**
+>    - Nghiêm cấm chỉnh sửa hoặc thay đổi nội dung của bất kỳ file `.tsx`, `.ts` nào thuộc mã nguồn ứng dụng (`apps/`, `packages/`).
+>    - Mọi mã TypeScript mà tester tạo ra hoặc chỉnh sửa chỉ được phép nằm duy nhất trong thư mục [tests/](file:///Users/tranquocdung/Projects/papaya-asign/tests) (test suites, test cases, mock fixtures).
+>    - Khi phát hiện bug: Giữ nguyên test case ở trạng thái `FAILED`, lập báo cáo lỗi trong test report; **tuyệt đối không tự sửa code sản phẩm**.
+> 3. **CHỈ ĐƯỢC PHÉP TRUY CẬP CÁC THƯ MỤC SAU:**
+>    - Thư mục kiểm thử: [tests/](file:///Users/tranquocdung/Projects/papaya-asign/tests) (Chứa toàn bộ test suites, test cases, fixtures, algorithm specs).
+>    - Thư mục báo cáo: [test-reports/](file:///Users/tranquocdung/Projects/papaya-asign/test-reports) (Chứa báo cáo kiểm thử, coverage HTML/LCOV, JUnit XML, Summary JSON).
+>    - _(Thư mục nội bộ `.agents/skills/papaya-tester-senior/` chứa scripts runner và references)._
 
 ---
 

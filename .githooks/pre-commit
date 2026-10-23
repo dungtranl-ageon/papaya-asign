@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Papaya Claims Copilot - Pre-Commit Hook (Security Audit & Lint)
+# ==============================================================================
+set -e
+
+echo "🔍 [GIT HOOK] Running pre-commit security audit & checks..."
+
+# 1. Run DevSecOps security audit
+bash .agents/skills/papaya-devops/scripts/security-audit.sh
+
+# 2. Check formatting on staged files
+if command -v pnpm &> /dev/null; then
+    pnpm format:check || {
+        echo "⚠️  Format check failed. Run 'pnpm format' to auto-fix code styling."
+        exit 1
+    }
+fi
+
+echo "✅ [GIT HOOK] Pre-commit checks passed successfully."
+exit 0

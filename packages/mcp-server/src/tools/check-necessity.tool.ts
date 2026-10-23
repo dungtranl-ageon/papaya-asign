@@ -27,7 +27,9 @@ export interface CheckNecessityOutput {
 /**
  * Pure function: Evaluates medical necessity and treatment appropriateness
  */
-export async function checkMedicalNecessity(input: CheckNecessityInput): Promise<CheckNecessityOutput> {
+export async function checkMedicalNecessity(
+  input: CheckNecessityInput,
+): Promise<CheckNecessityOutput> {
   const itemsEvaluation: NecessityItemCheck[] = [];
   const warningFlags: string[] = [];
 
@@ -39,7 +41,11 @@ export async function checkMedicalNecessity(input: CheckNecessityInput): Promise
 
     // Cosmetic / elective checks
     const descLower = item.description.toLowerCase();
-    if (descLower.includes('cosmetic') || descLower.includes('thẩm mỹ') || descLower.includes('làm đẹp')) {
+    if (
+      descLower.includes('cosmetic') ||
+      descLower.includes('thẩm mỹ') ||
+      descLower.includes('làm đẹp')
+    ) {
       isNecessary = false;
       reason = 'Elective/Cosmetic treatment is not deemed medically necessary';
       score = 15;
@@ -60,9 +66,13 @@ export async function checkMedicalNecessity(input: CheckNecessityInput): Promise
   }
 
   const allNecessary = itemsEvaluation.every(item => item.isMedicallyNecessary);
-  const averageScore = itemsEvaluation.length > 0
-    ? Math.round(itemsEvaluation.reduce((acc, curr) => acc + curr.confidenceScore, 0) / itemsEvaluation.length)
-    : 100;
+  const averageScore =
+    itemsEvaluation.length > 0
+      ? Math.round(
+          itemsEvaluation.reduce((acc, curr) => acc + curr.confidenceScore, 0) /
+            itemsEvaluation.length,
+        )
+      : 100;
 
   return {
     isPassed: allNecessary,

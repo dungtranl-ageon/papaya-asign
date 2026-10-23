@@ -3,7 +3,16 @@ import { z } from 'zod';
 export const ClaimItemSchema = z.object({
   itemId: z.string(),
   description: z.string(),
-  category: z.enum(['INPATIENT', 'OUTPATIENT', 'DENTAL', 'SURGERY', 'MEDICATION', 'LABORATORY', 'SPECIALIST_FEE', 'OTHER']),
+  category: z.enum([
+    'INPATIENT',
+    'OUTPATIENT',
+    'DENTAL',
+    'SURGERY',
+    'MEDICATION',
+    'LABORATORY',
+    'SPECIALIST_FEE',
+    'OTHER',
+  ]),
   amountRequested: z.number().positive(),
   amountApproved: z.number().nonnegative().optional(),
   rejectionReason: z.string().optional(),
@@ -20,7 +29,7 @@ export const ClaimDocumentSchema = z.object({
     'LAB_RESULT',
     'SURGICAL_REPORT',
     'CLAIM_FORM',
-    'OTHER'
+    'OTHER',
   ]),
   fileName: z.string(),
   fileUrl: z.string().optional(),
@@ -36,7 +45,7 @@ export const ClaimStatusSchema = z.enum([
   'APPROVED',
   'REJECTED',
   'OVERRIDDEN',
-  'PAID'
+  'PAID',
 ]);
 
 export const ClaimSchema = z.object({

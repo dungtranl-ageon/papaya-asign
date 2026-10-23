@@ -12,11 +12,7 @@
     "PRE_EXISTING": 365,
     "SPECIAL_DISEASE": 180
   },
-  "exclusions": [
-    "K21",
-    "K29",
-    "M54.5"
-  ],
+  "exclusions": ["K21", "K29", "M54.5"],
   "benefits": [
     {
       "category": "INPATIENT",

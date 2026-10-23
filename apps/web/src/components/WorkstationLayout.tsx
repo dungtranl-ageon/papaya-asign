@@ -12,16 +12,19 @@ export function WorkstationLayout() {
           <div className="h-8 w-8 rounded-lg bg-teal-600 flex items-center justify-center text-white font-bold">
             P
           </div>
-          <span className="font-semibold text-slate-800 text-lg">
-            Papaya Claims Copilot
-          </span>
+          <span className="font-semibold text-slate-800 text-lg">Papaya Claims Copilot</span>
           <span className="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-medium">
             Assessor Workstation
           </span>
         </div>
         <div className="flex items-center gap-4 text-sm text-slate-600">
-          <span>Assessor: <strong>Tran Quoc Dung</strong></span>
-          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="System Online" />
+          <span>
+            Assessor: <strong>Tran Quoc Dung</strong>
+          </span>
+          <div
+            className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"
+            title="System Online"
+          />
         </div>
       </header>
 
@@ -55,9 +58,15 @@ export function WorkstationLayout() {
                 Insurance Policy: POL-GOLD-99882
               </h2>
               <div className="grid grid-cols-3 gap-4 text-xs text-slate-600">
-                <div>Plan: <strong>Healthcare Gold</strong></div>
-                <div>Status: <span className="text-emerald-600 font-semibold">ACTIVE</span></div>
-                <div>Annual Limit: <strong>500,000,000 VND</strong></div>
+                <div>
+                  Plan: <strong>Healthcare Gold</strong>
+                </div>
+                <div>
+                  Status: <span className="text-emerald-600 font-semibold">ACTIVE</span>
+                </div>
+                <div>
+                  Annual Limit: <strong>500,000,000 VND</strong>
+                </div>
               </div>
             </div>
 
@@ -106,9 +115,7 @@ export function WorkstationLayout() {
           <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-teal-600" />
-              <h2 className="font-semibold text-slate-800 text-sm">
-                Mastra Hybrid Copilot
-              </h2>
+              <h2 className="font-semibold text-slate-800 text-sm">Mastra Hybrid Copilot</h2>
             </div>
             <button className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
               Run Auto-Assessment
@@ -146,8 +153,9 @@ export function WorkstationLayout() {
               <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-none p-3.5 text-xs text-slate-700 max-w-[85%] shadow-sm">
                 <p className="font-semibold text-slate-900 mb-1">Assessment Assessment Ready</p>
                 <p>
-                  Claim #CLM-2026-001 has passed all 4 verification steps. Laparoscopic Appendectomy is deemed medically necessary.
-                  Under policy <strong>POL-GOLD-99882</strong> (20% copay on surgery), eligible payable amount is <strong>36,000,000 VND</strong>.
+                  Claim #CLM-2026-001 has passed all 4 verification steps. Laparoscopic Appendectomy
+                  is deemed medically necessary. Under policy <strong>POL-GOLD-99882</strong> (20%
+                  copay on surgery), eligible payable amount is <strong>36,000,000 VND</strong>.
                 </p>
               </div>
             </div>

@@ -13,7 +13,7 @@ async function main() {
 
   // Seed Policies
   if (fs.existsSync(policiesDir)) {
-    const policyFiles = fs.readdirSync(policiesDir).filter((f) => f.endsWith('.json'));
+    const policyFiles = fs.readdirSync(policiesDir).filter(f => f.endsWith('.json'));
     for (const file of policyFiles) {
       const content = JSON.parse(fs.readFileSync(path.join(policiesDir, file), 'utf-8'));
       await prisma.policy.upsert({
@@ -40,7 +40,7 @@ async function main() {
 
   // Seed Claims
   if (fs.existsSync(fixturesDir)) {
-    const claimFiles = fs.readdirSync(fixturesDir).filter((f) => f.endsWith('.json'));
+    const claimFiles = fs.readdirSync(fixturesDir).filter(f => f.endsWith('.json'));
     for (const file of claimFiles) {
       const content = JSON.parse(fs.readFileSync(path.join(fixturesDir, file), 'utf-8'));
       await prisma.claim.upsert({
@@ -71,7 +71,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error('Seeding error:', e);
     process.exit(1);
   })

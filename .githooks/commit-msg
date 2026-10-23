@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Papaya Claims Copilot - Commit Message Linter (Conventional Commits)
+# ==============================================================================
+set -e
+
+COMMIT_MSG_FILE="$1"
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE" | head -n 1)
+
+# Allow merge commits or fixup commits
+if [[ "$COMMIT_MSG" =~ ^(Merge|Revert|fixup!|squash!) ]]; then
+    exit 0
+fi
+
+# Conventional Commits regex pattern:
+# Format: <type>(<scope>): <subject> OR <type>: <subject>
+# Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+PATTERN="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_\-\./]+\))?!?: .{1,100}$"
+
+if ! [[ "$COMMIT_MSG" =~ $PATTERN ]]; then
+    echo "===================================================================="
+    echo "❌ COMMIT REJECTED: Commit message does NOT follow Conventional Commits!"
+    echo "--------------------------------------------------------------------"
+    echo "Your commit message was:"
+    echo "  \"$COMMIT_MSG\""
+    echo ""
+    echo "Valid format: <type>(<scope>): <short description>"
+    echo "Examples:"
+    echo "  feat(api): integrate mastra sse streaming"
+    echo "  fix(mcp): resolve sublimit copay rounding calculation"
+    echo "  docs: update deployment and architecture blueprint"
+    echo "  test(contracts): add tests for medical necessity tool"
+    echo "  ci: configure github actions pipeline"
+    echo "===================================================================="
+    exit 1
+fi
+
+exit 0

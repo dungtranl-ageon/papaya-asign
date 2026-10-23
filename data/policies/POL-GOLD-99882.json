@@ -13,11 +13,7 @@
     "MATERNITY": 270,
     "SPECIAL_DISEASE": 180
   },
-  "exclusions": [
-    "K21",
-    "Z41.1",
-    "F32"
-  ],
+  "exclusions": ["K21", "Z41.1", "F32"],
   "benefits": [
     {
       "category": "INPATIENT",

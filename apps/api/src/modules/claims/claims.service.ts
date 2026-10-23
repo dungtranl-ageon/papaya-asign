@@ -10,13 +10,20 @@ import * as path from 'path';
 @Injectable()
 export class ClaimsService {
   private readonly logger = new Logger(ClaimsService.name);
-  private readonly fixturesDir = path.resolve(process.cwd(), '../../data/fixtures');
+  private readonly fixturesDir: string;
 
   constructor(
     private readonly policiesService: PoliciesService,
     private readonly mastraService: MastraService,
     private readonly auditService: AuditService,
-  ) {}
+  ) {
+    const candidates = [
+      path.resolve(process.cwd(), 'data/fixtures'),
+      path.resolve(process.cwd(), '../../data/fixtures'),
+      path.resolve(__dirname, '../../../../data/fixtures'),
+    ];
+    this.fixturesDir = candidates.find(c => fs.existsSync(c)) || candidates[0]!;
+  }
 
   async listClaims(): Promise<Claim[]> {
     const claims: Claim[] = [];
@@ -64,21 +71,21 @@ export class ClaimsService {
   }
 
   assessClaimStream(claimId: string): Observable<SseEventPayload> {
-    const subject = new Observable<SseEventPayload>((subscriber) => {
+    const subject = new Observable<SseEventPayload>(subscriber => {
       this.getClaimById(claimId)
-        .then(async (claim) => {
+        .then(async claim => {
           const policy = await this.policiesService.findByNumber(claim.policyNumber);
           if (!policy) {
             subscriber.error(new NotFoundException(`Policy ${claim.policyNumber} not found`));
             return;
           }
           this.mastraService.assessClaimStream(claim, policy).subscribe({
-            next: (event) => subscriber.next(event),
-            error: (err) => subscriber.error(err),
+            next: event => subscriber.next(event),
+            error: err => subscriber.error(err),
             complete: () => subscriber.complete(),
           });
         })
-        .catch((err) => subscriber.error(err));
+        .catch(err => subscriber.error(err));
     });
 
     return subject;

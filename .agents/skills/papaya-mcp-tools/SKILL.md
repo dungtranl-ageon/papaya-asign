@@ -14,22 +14,23 @@ Skill này hướng dẫn quy chuẩn phát triển, kiểm thử và vận hàn
 
 ## 1. Danh Mục 4 Tools & Ràng Buộc Hợp Đồng (Zod Contracts)
 
-| Tool Name | Tham số Input (Zod) | Output Schema | Ràng buộc nghiệp vụ |
-| :--- | :--- | :--- | :--- |
-| **`verifyDocument`** | `{ documentId: string }` | `{ status: "VALID" \| "INCOMPLETE" \| "SUSPICIOUS", hasStamp: boolean, issues: string[] }` | Nếu thiếu chứng từ bắt buộc (VD: Giấy ra viện ca nội trú) -> trả về `INCOMPLETE`. |
-| **`lookupPolicy`** | `{ policyId: string }` | `{ status: "ACTIVE" \| "LAPSED", annualLimit: number, copay: number, exclusions: Clause[] }` | Trả về danh sách điều khoản có `clauseId` rõ ràng để trích dẫn. |
-| **`checkMedicalNecessity`**| `{ icd10: string, procedures: string[] }` | `{ isAppropriate: boolean, clinicalRationale: string, flaggedProcedures: string[] }` | Kiểm tra thủ thuật có phù hợp với chẩn đoán ICD-10 hay không. |
-| **`calculateBenefit`** | `{ policyId: string, claimType: string, amount: number }` | `{ submittedAmount, coveredAmount, copayAmount, memberPays, remainingBalance }` | **Pure Math Engine**: Tính toán số học chính xác tuyệt đối, cấm LLM tự tính. |
+| Tool Name                   | Tham số Input (Zod)                                       | Output Schema                                                                                | Ràng buộc nghiệp vụ                                                               |
+| :-------------------------- | :-------------------------------------------------------- | :------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- |
+| **`verifyDocument`**        | `{ documentId: string }`                                  | `{ status: "VALID" \| "INCOMPLETE" \| "SUSPICIOUS", hasStamp: boolean, issues: string[] }`   | Nếu thiếu chứng từ bắt buộc (VD: Giấy ra viện ca nội trú) -> trả về `INCOMPLETE`. |
+| **`lookupPolicy`**          | `{ policyId: string }`                                    | `{ status: "ACTIVE" \| "LAPSED", annualLimit: number, copay: number, exclusions: Clause[] }` | Trả về danh sách điều khoản có `clauseId` rõ ràng để trích dẫn.                   |
+| **`checkMedicalNecessity`** | `{ icd10: string, procedures: string[] }`                 | `{ isAppropriate: boolean, clinicalRationale: string, flaggedProcedures: string[] }`         | Kiểm tra thủ thuật có phù hợp với chẩn đoán ICD-10 hay không.                     |
+| **`calculateBenefit`**      | `{ policyId: string, claimType: string, amount: number }` | `{ submittedAmount, coveredAmount, copayAmount, memberPays, remainingBalance }`              | **Pure Math Engine**: Tính toán số học chính xác tuyệt đối, cấm LLM tự tính.      |
 
 ---
 
 ## 2. Quy Chuẩn Dual-Export
 
 Tất cả các tool trong `packages/mcp-server` bắt buộc phải hỗ trợ 2 hình thức xuất:
+
 1. **Export 1 — Stdio MCP Server (`src/server.ts`):**
-   * Cho phép Antigravity IDE kết nối trực tiếp qua file cấu hình [.agents/mcp_config.json](file:///Users/tranquocdung/Projects/papaya-asign/.agents/mcp_config.json).
+   - Cho phép Antigravity IDE kết nối trực tiếp qua file cấu hình [.agents/mcp_config.json](file:///Users/tranquocdung/Projects/papaya-asign/.agents/mcp_config.json).
 2. **Export 2 — Direct TypeScript Functions / Mastra Tools (`src/index.ts`):**
-   * Cho phép backend NestJS và Mastra Workflow import trực tiếp trong cùng tiến trình (In-process execution), triệt tiêu độ trễ mạng.
+   - Cho phép backend NestJS và Mastra Workflow import trực tiếp trong cùng tiến trình (In-process execution), triệt tiêu độ trễ mạng.
 
 ---
 

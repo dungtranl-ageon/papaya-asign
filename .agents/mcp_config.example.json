@@ -2,9 +2,7 @@
   "mcpServers": {
     "papaya-assessment-tools": {
       "command": "node",
-      "args": [
-        "packages/mcp-server/dist/server.js"
-      ],
+      "args": ["packages/mcp-server/dist/server.js"],
       "env": {
         "NODE_ENV": "development",
         "DATA_PATH": "./data"

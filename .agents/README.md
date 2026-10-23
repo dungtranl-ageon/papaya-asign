@@ -33,8 +33,8 @@ Thư mục `.agents/` này chứa toàn bộ cấu hình **chuẩn hóa cho Goog
 ## 2. Nguyên tắc Phân định Ranh giới (Scope Boundaries)
 
 1. **Ranh giới Kỹ thuật vs Nghiệp vụ (No Business Logic in Rules):**
-   * Các file trong `.agents/` và `AGENTS.md` đóng vai trò là **kim chỉ nam về kỹ thuật lập trình, chất lượng code, bảo mật, kiểm thử và kiến trúc Monorepo** cho Antigravity.
-   * Toàn bộ tài liệu nghiệp vụ, kiến trúc domain và kịch bản nghiệp vụ của dự án được lưu trữ riêng biệt tại thư mục [docs/](file:///Users/tranquocdung/Projects/papaya-asign/docs).
+   - Các file trong `.agents/` và `AGENTS.md` đóng vai trò là **kim chỉ nam về kỹ thuật lập trình, chất lượng code, bảo mật, kiểm thử và kiến trúc Monorepo** cho Antigravity.
+   - Toàn bộ tài liệu nghiệp vụ, kiến trúc domain và kịch bản nghiệp vụ của dự án được lưu trữ riêng biệt tại thư mục [docs/](file:///Users/tranquocdung/Projects/papaya-asign/docs).
 2. **Ranh giới MCP Dự án vs Toàn cục:**
-   * Mọi công cụ MCP phục vụ dự án được cấu hình độc lập tại `.agents/mcp_config.json`.
-   * Nghiêm cấm mọi can thiệp vào file cấu hình MCP toàn cục của máy (`~/.gemini/config/mcp_config.json`).
+   - Mọi công cụ MCP phục vụ dự án được cấu hình độc lập tại `.agents/mcp_config.json`.
+   - Nghiêm cấm mọi can thiệp vào file cấu hình MCP toàn cục của máy (`~/.gemini/config/mcp_config.json`).

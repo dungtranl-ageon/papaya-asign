@@ -6,15 +6,15 @@ Tài liệu thiết kế kiến trúc và phân tích chi tiết cho bài toán 
 
 ## Danh mục tài liệu
 
-| File | Tên tài liệu & Mô tả | Trọng tâm |
-| :--- | :--- | :--- |
-| **[01. Phân tích & Lựa chọn Thử thách](01_CHALLENGE_EVALUATION_AND_SELECTION.md)** | So sánh tổng quan 15 bài thử thách trong repo `pumpkin`, đánh giá chiến lược đạt 3 points tối ưu. | Đánh giá chiến lược, độ khó, tính khả thi, phân loại tech stack |
-| **[02. Chi tiết Yêu cầu AI Challenge 11](02_CHALLENGE_11_SPECIFICATION_AND_REQUIREMENTS.md)** | Phân tích chuyên sâu đề bài 11: Làm rõ bản chất Copilot, RAG, Guardrails, Direct UI và AI phụ trợ. | Yêu cầu cốt lõi, bẫy chấm điểm, trả lời 6 câu hỏi kỹ thuật lớn |
-| **[03. Kiến trúc Hệ thống Tổng thể](03_ENTERPRISE_SYSTEM_ARCHITECTURE.md)** | Bản thiết kế kiến trúc phân tán cấp doanh nghiệp: Data & Search Layer, Security & Data Deletion, Agent Workflow. | Enterprise Architecture, S3 KMS Cryptographic Erasure, OpenSearch |
-| **[04. Các AI Phụ trợ & Đặc tả Docker](04_AUXILIARY_AI_AND_DOCKER_SPEC.md)** | Đặc tả 5 AI phụ trợ độc lập, Dockerfile, tài nguyên CPU/RAM và file `docker-compose.yml` chuẩn. | Microservices, Microsoft Presidio, FastEmbed, ImageHash, PaddleOCR |
-| **[05. Mô hình Dữ liệu & 3 Kịch bản Thẩm định](05_DATA_MODELS_AND_TEST_CASES.md)** | Định nghĩa chi tiết Data Contracts (Zod/TypeScript), 4 Tool Schemas, và 3 Test Cases mẫu (Approve, Reject, Missing Info). | Data Models, Math Logic, Báo cáo thẩm định chuẩn |
-| **[06. Đặc tả Thiết kế UI/UX & Wireframe](06_UI_UX_WIREFRAME_AND_SPECIFICATION.md)** | Thiết kế toàn diện Wireframe, Bố cục Dual-Pane Workstation, Direct Generative UI trong chat, và 4 Action Modals. | UX/UI Wireframe, Vercel AI SDK Cards, HITL Actions, Design System |
-| **[07. Thiết kế Công nghệ & Kế hoạch](07_TECH_STACK_AND_IMPLEMENTATION_BLUEPRINT.md)** | Thống nhất tech stack (Mastra, NestJS, Next.js, MCP Tools, Prisma SQLite), kiến trúc Monorepo và Sequence Diagram luồng Hybrid. | Monorepo, Mastra Workflow/Agent, Dual-Export MCP, SSE Streaming |
+| File                                                                                          | Tên tài liệu & Mô tả                                                                                                            | Trọng tâm                                                          |
+| :-------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------- |
+| **[01. Phân tích & Lựa chọn Thử thách](01_CHALLENGE_EVALUATION_AND_SELECTION.md)**            | So sánh tổng quan 15 bài thử thách trong repo `pumpkin`, đánh giá chiến lược đạt 3 points tối ưu.                               | Đánh giá chiến lược, độ khó, tính khả thi, phân loại tech stack    |
+| **[02. Chi tiết Yêu cầu AI Challenge 11](02_CHALLENGE_11_SPECIFICATION_AND_REQUIREMENTS.md)** | Phân tích chuyên sâu đề bài 11: Làm rõ bản chất Copilot, RAG, Guardrails, Direct UI và AI phụ trợ.                              | Yêu cầu cốt lõi, bẫy chấm điểm, trả lời 6 câu hỏi kỹ thuật lớn     |
+| **[03. Kiến trúc Hệ thống Tổng thể](03_ENTERPRISE_SYSTEM_ARCHITECTURE.md)**                   | Bản thiết kế kiến trúc phân tán cấp doanh nghiệp: Data & Search Layer, Security & Data Deletion, Agent Workflow.                | Enterprise Architecture, S3 KMS Cryptographic Erasure, OpenSearch  |
+| **[04. Các AI Phụ trợ & Đặc tả Docker](04_AUXILIARY_AI_AND_DOCKER_SPEC.md)**                  | Đặc tả 5 AI phụ trợ độc lập, Dockerfile, tài nguyên CPU/RAM và file `docker-compose.yml` chuẩn.                                 | Microservices, Microsoft Presidio, FastEmbed, ImageHash, PaddleOCR |
+| **[05. Mô hình Dữ liệu & 3 Kịch bản Thẩm định](05_DATA_MODELS_AND_TEST_CASES.md)**            | Định nghĩa chi tiết Data Contracts (Zod/TypeScript), 4 Tool Schemas, và 3 Test Cases mẫu (Approve, Reject, Missing Info).       | Data Models, Math Logic, Báo cáo thẩm định chuẩn                   |
+| **[06. Đặc tả Thiết kế UI/UX & Wireframe](06_UI_UX_WIREFRAME_AND_SPECIFICATION.md)**          | Thiết kế toàn diện Wireframe, Bố cục Dual-Pane Workstation, Direct Generative UI trong chat, và 4 Action Modals.                | UX/UI Wireframe, Vercel AI SDK Cards, HITL Actions, Design System  |
+| **[07. Thiết kế Công nghệ & Kế hoạch](07_TECH_STACK_AND_IMPLEMENTATION_BLUEPRINT.md)**        | Thống nhất tech stack (Mastra, NestJS, Next.js, MCP Tools, Prisma SQLite), kiến trúc Monorepo và Sequence Diagram luồng Hybrid. | Monorepo, Mastra Workflow/Agent, Dual-Export MCP, SSE Streaming    |
 
 ---
 

@@ -32,25 +32,27 @@ Tài liệu này đặc tả chi tiết 5 dịch vụ AI phụ trợ độc lậ
 ## 2. Chi tiết Đặc tả Từng Dịch vụ
 
 ### Dịch vụ 1: PII Redactor Service (Port 8001)
-* **Thư viện nền tảng:** Microsoft Presidio (`presidio-analyzer`, `presidio-anonymizer`) + `spacy`.
-* **Mục đích:** Đảm bảo tuân thủ Luật Bảo vệ Dữ liệu Cá nhân (PDPA Việt Nam, PDPA Thái Lan) và [Data Deletion Whitepaper](../requirements/Whitepapers/Data_Deletion.md).
-* **API Endpoint:** `POST /api/v1/redact`
-* **Input:**
+
+- **Thư viện nền tảng:** Microsoft Presidio (`presidio-analyzer`, `presidio-anonymizer`) + `spacy`.
+- **Mục đích:** Đảm bảo tuân thủ Luật Bảo vệ Dữ liệu Cá nhân (PDPA Việt Nam, PDPA Thái Lan) và [Data Deletion Whitepaper](../requirements/Whitepapers/Data_Deletion.md).
+- **API Endpoint:** `POST /api/v1/redact`
+- **Input:**
   ```json
   { "text": "Bệnh nhân Nguyễn Văn A, số CCCD 079198001234, khám tại BV Chợ Rẫy" }
   ```
-* **Output:**
+- **Output:**
   ```json
   { "redacted_text": "Bệnh nhân <PERSON>, số CCCD <VIETNAM_ID>, khám tại BV Chợ Rẫy" }
   ```
-* **Tài nguyên yêu cầu:** 1 vCPU, 800MB RAM.
+- **Tài nguyên yêu cầu:** 1 vCPU, 800MB RAM.
 
 ### Dịch vụ 2: Vision / OCR Extractor Service (Port 8002)
-* **Thư viện nền tảng:** `PaddleOCR` (Inference CPU qua `onnxruntime`).
-* **Mục đích:** Đọc hình ảnh phiếu thu viện phí, giấy ra viện, phát hiện dấu mộc tròn.
-* **API Endpoint:** `POST /api/v1/ocr/extract`
-* **Input:** `multipart/form-data` (file ảnh JPG/PNG/PDF).
-* **Output:**
+
+- **Thư viện nền tảng:** `PaddleOCR` (Inference CPU qua `onnxruntime`).
+- **Mục đích:** Đọc hình ảnh phiếu thu viện phí, giấy ra viện, phát hiện dấu mộc tròn.
+- **API Endpoint:** `POST /api/v1/ocr/extract`
+- **Input:** `multipart/form-data` (file ảnh JPG/PNG/PDF).
+- **Output:**
   ```json
   {
     "document_type": "hospital_receipt",
@@ -64,17 +66,18 @@ Tài liệu này đặc tả chi tiết 5 dịch vụ AI phụ trợ độc lậ
     }
   }
   ```
-* **Tài nguyên yêu cầu:** 2 vCPU, 1.8GB RAM.
+- **Tài nguyên yêu cầu:** 2 vCPU, 1.8GB RAM.
 
 ### Dịch vụ 3: Medical Normalizer Service (Port 8003)
-* **Thư viện nền tảng:** `FastEmbed` (Qdrant) + `RapidFuzz` + File cơ sở dữ liệu ICD-10 WHO (`icd10.parquet`).
-* **Mục đích:** Ánh xạ chẩn đoán lâm sàng tự do của bác sĩ sang mã ICD-10 chuẩn để đối chiếu với quyền lợi bảo hiểm.
-* **API Endpoint:** `POST /api/v1/medical/map-icd10`
-* **Input:**
+
+- **Thư viện nền tảng:** `FastEmbed` (Qdrant) + `RapidFuzz` + File cơ sở dữ liệu ICD-10 WHO (`icd10.parquet`).
+- **Mục đích:** Ánh xạ chẩn đoán lâm sàng tự do của bác sĩ sang mã ICD-10 chuẩn để đối chiếu với quyền lợi bảo hiểm.
+- **API Endpoint:** `POST /api/v1/medical/map-icd10`
+- **Input:**
   ```json
   { "raw_diagnosis": "viêm phế quản phổi cấp" }
   ```
-* **Output:**
+- **Output:**
   ```json
   {
     "matched_code": "J20.9",
@@ -84,16 +87,17 @@ Tài liệu này đặc tả chi tiết 5 dịch vụ AI phụ trợ độc lậ
     "category": "RESPIRATORY"
   }
   ```
-* **Tài nguyên yêu cầu:** 1 vCPU, 1GB RAM.
+- **Tài nguyên yêu cầu:** 1 vCPU, 1GB RAM.
 
 ### Dịch vụ 4: Document Forensics Service (Port 8004)
-* **Thư viện nền tảng:** `ImageHash` (Perceptual Hashing) + `OpenCV-Python-Headless` (Error Level Analysis - ELA).
-* **Mục đích:**
+
+- **Thư viện nền tảng:** `ImageHash` (Perceptual Hashing) + `OpenCV-Python-Headless` (Error Level Analysis - ELA).
+- **Mục đích:**
   1. Tính mã băm `pHash` để phát hiện một hóa đơn viện phí bị nộp 2 lần trong 2 claim khác nhau (Double Claim Fraud).
   2. Phân tích ELA phát hiện chỉnh sửa số tiền bằng Photoshop/phần mềm đồ họa.
-* **API Endpoint:** `POST /api/v1/forensics/analyze`
-* **Input:** `multipart/form-data` (ảnh hóa đơn).
-* **Output:**
+- **API Endpoint:** `POST /api/v1/forensics/analyze`
+- **Input:** `multipart/form-data` (ảnh hóa đơn).
+- **Output:**
   ```json
   {
     "phash": "a7b3c9d1e2f4",
@@ -103,12 +107,13 @@ Tài liệu này đặc tả chi tiết 5 dịch vụ AI phụ trợ độc lậ
     "verdict": "CLEAN"
   }
   ```
-* **Tài nguyên yêu cầu:** 0.5 vCPU, 400MB RAM.
+- **Tài nguyên yêu cầu:** 0.5 vCPU, 400MB RAM.
 
 ### Dịch vụ 5: Guardrails & Evals Judge Service (Port 8005)
-* **Thư viện nền tảng:** `Guardrails AI` / `DeepEval`.
-* **Mục đích:** Kiểm tra tính hợp lệ của báo cáo thẩm định trước khi trả về cho người dùng (kiểm tra toán học: số tiền duyệt + copay = tổng hóa đơn; kiểm tra điều khoản trích dẫn có tồn tại trong danh mục hợp đồng hay không).
-* **Tài nguyên yêu cầu:** 1 vCPU, 800MB RAM.
+
+- **Thư viện nền tảng:** `Guardrails AI` / `DeepEval`.
+- **Mục đích:** Kiểm tra tính hợp lệ của báo cáo thẩm định trước khi trả về cho người dùng (kiểm tra toán học: số tiền duyệt + copay = tổng hóa đơn; kiểm tra điều khoản trích dẫn có tồn tại trong danh mục hợp đồng hay không).
+- **Tài nguyên yêu cầu:** 1 vCPU, 800MB RAM.
 
 ---
 
@@ -130,7 +135,7 @@ services:
     container_name: papaya-claims-web
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - PORT=3000
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
@@ -149,7 +154,7 @@ services:
     container_name: claims-agent-core
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - '8000:8000'
     environment:
       - PII_SERVICE_URL=http://pii-redactor:8001
       - OCR_SERVICE_URL=http://ocr-service:8002
@@ -170,7 +175,7 @@ services:
     container_name: pii-redactor
     restart: unless-stopped
     ports:
-      - "8001:3000"
+      - '8001:3000'
 
   # -------------------------------------------------------------
   # 4. AI Phụ trợ: Medical Normalizer (FastEmbed + ICD-10)
@@ -182,7 +187,7 @@ services:
     container_name: medical-normalizer
     restart: unless-stopped
     ports:
-      - "8003:8003"
+      - '8003:8003'
 
   # -------------------------------------------------------------
   # 5. AI Phụ trợ: Document Forensics (Tamper & Duplicate Detection)
@@ -194,7 +199,7 @@ services:
     container_name: doc-forensics
     restart: unless-stopped
     ports:
-      - "8004:8004"
+      - '8004:8004'
 
   # -------------------------------------------------------------
   # 6. Database: PostgreSQL (Policies, Claims, Balances, Audit Log)
@@ -204,7 +209,7 @@ services:
     container_name: papaya-postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       - POSTGRES_USER=papaya
       - POSTGRES_PASSWORD=papaya_secret
@@ -221,6 +226,7 @@ volumes:
 ## 4. Đánh giá Mức độ Tiêu thụ Tài nguyên (Resource Footprint)
 
 Toàn bộ cụm Docker trên được tối ưu hóa đặc biệt:
-* **Tổng lượng RAM cần thiết:** ~3.8 GB.
-* **Tổng CPU:** Chạy mượt mà trên 2–4 Cores CPU thông thường.
-* **Khả năng tương thích:** Chạy hoàn hảo trên MacBook chip Apple Silicon (M1/M2/M3) cũng như các máy trạm Linux/Windows Intel/AMD mà **hoàn toàn không cần GPU rời**.
+
+- **Tổng lượng RAM cần thiết:** ~3.8 GB.
+- **Tổng CPU:** Chạy mượt mà trên 2–4 Cores CPU thông thường.
+- **Khả năng tương thích:** Chạy hoàn hảo trên MacBook chip Apple Silicon (M1/M2/M3) cũng như các máy trạm Linux/Windows Intel/AMD mà **hoàn toàn không cần GPU rời**.

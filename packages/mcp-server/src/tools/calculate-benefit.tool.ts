@@ -20,7 +20,9 @@ export interface CalculateBenefitOutput {
 /**
  * Pure function: Calculates exact payable amounts with copay, deductibles and sublimits
  */
-export async function calculateBenefit(input: CalculateBenefitInput): Promise<CalculateBenefitOutput> {
+export async function calculateBenefit(
+  input: CalculateBenefitInput,
+): Promise<CalculateBenefitOutput> {
   const breakdown: BenefitCalculationItem[] = [];
   let totalRequested = 0;
   let totalPayable = 0;

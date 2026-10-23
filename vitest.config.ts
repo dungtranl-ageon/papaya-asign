@@ -4,12 +4,17 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['**/*.spec.ts', '**/*.test.ts'],
-    exclude: ['node_modules', 'dist', '.next'],
+    include: [
+      'tests/**/*.spec.ts',
+      'src/**/*.spec.ts',
+      'apps/*/src/**/*.spec.ts',
+      'packages/*/src/**/*.spec.ts',
+    ],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.next/**', '**/.turbo/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'dist/', '**/*.d.ts'],
+      exclude: ['**/node_modules/**', '**/dist/**', '**/*.d.ts'],
     },
   },
 });

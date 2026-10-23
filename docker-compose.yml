@@ -2,8 +2,59 @@ version: '3.8'
 
 services:
   # ----------------------------------------------------------------------------
-  # PostgreSQL (Optional - for Enterprise / Production Persistent Storage)
-  # Default local execution uses SQLite zero-setup database.
+  # Next.js 15 Assessor Workstation (Frontend)
+  # ----------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: papaya_web
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: http://api:3001
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - papaya_network
+
+  # ----------------------------------------------------------------------------
+  # NestJS 10 + Mastra AI Engine (Backend API)
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: papaya_api
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      CORS_ORIGIN: http://localhost:3000
+      DATABASE_URL: file:/app/data/papaya_claims.db
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://localhost:11434/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-ollama}
+      MODEL_NAME: ${MODEL_NAME:-llama3.3}
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3001/claims']
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - papaya_network
+
+  # ----------------------------------------------------------------------------
+  # PostgreSQL (Optional - for Persistent Relational Storage)
+  # Default local execution uses SQLite.
   # ----------------------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
@@ -23,6 +74,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - papaya_network
 
   # ----------------------------------------------------------------------------
   # Local Ollama AI Engine (Optional - Profile: ai)
@@ -37,6 +90,12 @@ services:
     volumes:
       - ollama_models:/root/.ollama
     restart: unless-stopped
+    networks:
+      - papaya_network
+
+networks:
+  papaya_network:
+    driver: bridge
 
 volumes:
   postgres_data:

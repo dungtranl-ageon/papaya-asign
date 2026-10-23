@@ -26,7 +26,7 @@ export interface LookupPolicyOutput {
  */
 export async function lookupPolicy(
   input: LookupPolicyInput,
-  policyData?: Policy
+  policyData?: Policy,
 ): Promise<LookupPolicyOutput> {
   if (!policyData) {
     return {
@@ -49,11 +49,14 @@ export async function lookupPolicy(
   const isStatusActive = policyData.status === 'ACTIVE';
 
   const matchedExclusions = policyData.exclusions.filter(
-    ex => ex.toUpperCase() === input.diagnosisIcd10.toUpperCase()
+    ex => ex.toUpperCase() === input.diagnosisIcd10.toUpperCase(),
   );
   const isExclusionMatched = matchedExclusions.length > 0;
 
-  const remainingAnnualLimit = Math.max(0, policyData.annualTotalLimit - policyData.annualUsedAmount);
+  const remainingAnnualLimit = Math.max(
+    0,
+    policyData.annualTotalLimit - policyData.annualUsedAmount,
+  );
 
   let rejectionReason: string | undefined;
   if (!isStatusActive) {
@@ -66,7 +69,8 @@ export async function lookupPolicy(
     rejectionReason = 'Annual policy limit has been fully exhausted';
   }
 
-  const isEligible = isStatusActive && !isExpired && !isExclusionMatched && remainingAnnualLimit > 0;
+  const isEligible =
+    isStatusActive && !isExpired && !isExclusionMatched && remainingAnnualLimit > 0;
 
   return {
     policyNumber: input.policyNumber,

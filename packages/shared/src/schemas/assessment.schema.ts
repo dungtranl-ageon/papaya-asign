@@ -6,7 +6,7 @@ export const AssessmentStepResultSchema = z.object({
     'LOOKUP_POLICY',
     'CHECK_MEDICAL_NECESSITY',
     'CALCULATE_BENEFIT',
-    'GENERATE_REPORT'
+    'GENERATE_REPORT',
   ]),
   status: z.enum(['PASSED', 'FAILED', 'WARNING', 'ACTION_REQUIRED']),
   score: z.number().min(0).max(100).optional(),
@@ -32,12 +32,7 @@ export const AssessmentReportSchema = z.object({
   assessmentId: z.string(),
   claimId: z.string(),
   policyNumber: z.string(),
-  finalRecommendation: z.enum([
-    'APPROVE',
-    'REJECT',
-    'REQUEST_MORE_INFO',
-    'MANUAL_ESCALATION'
-  ]),
+  finalRecommendation: z.enum(['APPROVE', 'REJECT', 'REQUEST_MORE_INFO', 'MANUAL_ESCALATION']),
   totalRequested: z.number().nonnegative(),
   totalPayable: z.number().nonnegative(),
   totalDeductions: z.number().nonnegative(),

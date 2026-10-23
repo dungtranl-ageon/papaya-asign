@@ -1,27 +1,12 @@
 #!/usr/bin/env node
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
-import {
-  verifyDocument,
-  VerifyDocumentInputSchema,
-} from './tools/verify-document.tool';
-import {
-  lookupPolicy,
-  LookupPolicyInputSchema,
-} from './tools/lookup-policy.tool';
-import {
-  checkMedicalNecessity,
-  CheckNecessityInputSchema,
-} from './tools/check-necessity.tool';
-import {
-  calculateBenefit,
-  CalculateBenefitInputSchema,
-} from './tools/calculate-benefit.tool';
+import { verifyDocument, VerifyDocumentInputSchema } from './tools/verify-document.tool';
+import { lookupPolicy, LookupPolicyInputSchema } from './tools/lookup-policy.tool';
+import { checkMedicalNecessity, CheckNecessityInputSchema } from './tools/check-necessity.tool';
+import { calculateBenefit, CalculateBenefitInputSchema } from './tools/calculate-benefit.tool';
 
 const server = new Server(
   {
@@ -32,7 +17,7 @@ const server = new Server(
     capabilities: {
       tools: {},
     },
-  }
+  },
 );
 
 // Register tools list
@@ -97,7 +82,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 });
 
 // Handle tool invocation
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+server.setRequestHandler(CallToolRequestSchema, async request => {
   const { name, arguments: args } = request.params;
 
   try {
@@ -140,7 +125,7 @@ async function main() {
   process.stderr.write('Papaya MCP Assessment Server running on stdio\n');
 }
 
-main().catch((error) => {
+main().catch(error => {
   process.stderr.write(`Fatal MCP Server Error: ${error}\n`);
   process.exit(1);
 });

@@ -12,7 +12,7 @@ VIOLATIONS=0
 
 # 1. Check for tracked secret patterns
 echo -n "[SECRETS] Scanning tracked files for exposed private keys/tokens... "
-SUSPICIOUS_PATTERNS=$(git grep -EI '(BEGIN RSA PRIVATE KEY|BEGIN OPENSSH PRIVATE KEY|eyJhbGciOi|sk-[a-zA-Z0-9]{20,})' ':!.env.example' ':!*.md' ':!*.json' || true)
+SUSPICIOUS_PATTERNS=$(git grep -EI '(BEGIN RSA PRIVATE KEY|BEGIN OPENSSH PRIVATE KEY|eyJhbGciOi|sk-[a-zA-Z0-9]{20,})' ':!.env.example' ':!*.md' ':!*.json' ':!*security-audit.sh' || true)
 
 if [ -n "$SUSPICIOUS_PATTERNS" ]; then
     echo "❌ FAILED: Potential secrets detected in git index:"

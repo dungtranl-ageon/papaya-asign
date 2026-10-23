@@ -6,7 +6,16 @@ import * as path from 'path';
 @Injectable()
 export class PoliciesService {
   private readonly logger = new Logger(PoliciesService.name);
-  private readonly policiesDir = path.resolve(process.cwd(), '../../data/policies');
+  private readonly policiesDir: string;
+
+  constructor() {
+    const candidates = [
+      path.resolve(process.cwd(), 'data/policies'),
+      path.resolve(process.cwd(), '../../data/policies'),
+      path.resolve(__dirname, '../../../../data/policies'),
+    ];
+    this.policiesDir = candidates.find(c => fs.existsSync(c)) || candidates[0]!;
+  }
 
   async findByNumber(policyNumber: string): Promise<Policy | null> {
     try {

@@ -40,8 +40,16 @@ export async function executeClaimsAssessmentWorkflow(
   steps.push({
     step: 'VERIFY_DOCUMENT',
     status: step1Passed ? 'PASSED' : 'ACTION_REQUIRED',
-    score: step1Passed ? 100 : Math.round((docResult.verifiedDocumentsCount / (docResult.verifiedDocumentsCount + docResult.missingTypes.length)) * 100),
-    message: step1Passed ? 'All mandatory documents verified' : `Missing: ${docResult.missingTypes.join(', ')}`,
+    score: step1Passed
+      ? 100
+      : Math.round(
+          (docResult.verifiedDocumentsCount /
+            (docResult.verifiedDocumentsCount + docResult.missingTypes.length)) *
+            100,
+        ),
+    message: step1Passed
+      ? 'All mandatory documents verified'
+      : `Missing: ${docResult.missingTypes.join(', ')}`,
     details: docResult as unknown as Record<string, unknown>,
     executedAt: new Date().toISOString(),
   });
@@ -65,7 +73,9 @@ export async function executeClaimsAssessmentWorkflow(
     step: 'LOOKUP_POLICY',
     status: step2Passed ? 'PASSED' : 'FAILED',
     score: step2Passed ? 100 : 0,
-    message: step2Passed ? 'Policy active and eligible for treatment dates' : (policyResult.rejectionReason || 'Policy check failed'),
+    message: step2Passed
+      ? 'Policy active and eligible for treatment dates'
+      : policyResult.rejectionReason || 'Policy check failed',
     details: policyResult as unknown as Record<string, unknown>,
     executedAt: new Date().toISOString(),
   });

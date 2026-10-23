@@ -20,20 +20,17 @@ export class MastraService {
   assessClaimStream(claim: Claim, policy: Policy): Observable<SseEventPayload> {
     const subject = new Subject<SseEventPayload>();
 
-    executeClaimsAssessmentWorkflow(
-      { claim, policy },
-      (stepEvent, data) => {
-        this.logger.info(`Workflow step [${stepEvent}] on claim ${claim.claimId}`);
-        subject.next({
-          data: JSON.stringify({
-            event: stepEvent,
-            timestamp: new Date().toISOString(),
-            payload: data,
-          }),
-        });
-      },
-    )
-      .then((report) => {
+    executeClaimsAssessmentWorkflow({ claim, policy }, (stepEvent, data) => {
+      this.logger.info(`Workflow step [${stepEvent}] on claim ${claim.claimId}`);
+      subject.next({
+        data: JSON.stringify({
+          event: stepEvent,
+          timestamp: new Date().toISOString(),
+          payload: data,
+        }),
+      });
+    })
+      .then(report => {
         subject.next({
           data: JSON.stringify({
             event: 'WORKFLOW_FINISHED',
@@ -43,7 +40,7 @@ export class MastraService {
         });
         subject.complete();
       })
-      .catch((err) => {
+      .catch(err => {
         this.logger.error(`Assessment workflow error on claim ${claim.claimId}:`, err);
         subject.error(err);
       });

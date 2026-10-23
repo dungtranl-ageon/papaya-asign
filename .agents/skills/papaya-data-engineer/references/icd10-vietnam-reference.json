@@ -1,0 +1,82 @@
+[
+  {
+    "code": "K35",
+    "nameVi": "Viêm ruột thừa cấp",
+    "nameEn": "Acute appendicitis",
+    "typicalTreatment": "Phẫu thuật nội soi cắt ruột thừa",
+    "typicalCategory": "SURGERY",
+    "avgCostVnd": 25000000,
+    "coverageDefault": "COVERED",
+    "waitingPeriodDays": 30
+  },
+  {
+    "code": "K40",
+    "nameVi": "Thoát vị bẹn",
+    "nameEn": "Inguinal hernia",
+    "typicalTreatment": "Phẫu thuật đặt lưới nhân tạo",
+    "typicalCategory": "SURGERY",
+    "avgCostVnd": 20000000,
+    "coverageDefault": "COVERED",
+    "waitingPeriodDays": 90
+  },
+  {
+    "code": "K80",
+    "nameVi": "Sỏi túi mật có viêm túi mật cấp",
+    "nameEn": "Calculus of gallbladder with acute cholecystitis",
+    "typicalTreatment": "Phẫu thuật nội soi cắt túi mật",
+    "typicalCategory": "SURGERY",
+    "avgCostVnd": 35000000,
+    "coverageDefault": "COVERED",
+    "waitingPeriodDays": 90
+  },
+  {
+    "code": "J20",
+    "nameVi": "Viêm phế quản cấp",
+    "nameEn": "Acute bronchitis",
+    "typicalTreatment": "Kháng sinh truyền dịch, khí dung",
+    "typicalCategory": "INPATIENT",
+    "avgCostVnd": 8000000,
+    "coverageDefault": "COVERED",
+    "waitingPeriodDays": 30
+  },
+  {
+    "code": "K21",
+    "nameVi": "Bệnh trào ngược dạ dày - thực quản (GERD)",
+    "nameEn": "Gastro-esophageal reflux disease",
+    "typicalTreatment": "Nội soi tiêu hóa, dùng thuốc PPI ức chế bơm proton",
+    "typicalCategory": "OUTPATIENT",
+    "avgCostVnd": 4500000,
+    "coverageDefault": "COMMON_EXCLUSION",
+    "waitingPeriodDays": 365
+  },
+  {
+    "code": "Z41.1",
+    "nameVi": "Phẫu thuật tạo hình vì lý do thẩm mỹ",
+    "nameEn": "Other plastic surgery for unacceptable cosmetic appearance",
+    "typicalTreatment": "Nâng mũi, cắt mí, hút mỡ",
+    "typicalCategory": "SURGERY",
+    "avgCostVnd": 40000000,
+    "coverageDefault": "ABSOLUTE_EXCLUSION",
+    "waitingPeriodDays": 0
+  },
+  {
+    "code": "M54.5",
+    "nameVi": "Đau cột sống thắt lưng",
+    "nameEn": "Low back pain",
+    "typicalTreatment": "Vật lý trị liệu, kéo giãn cột sống",
+    "typicalCategory": "OUTPATIENT",
+    "avgCostVnd": 3500000,
+    "coverageDefault": "COMMON_EXCLUSION",
+    "waitingPeriodDays": 180
+  },
+  {
+    "code": "Q21",
+    "nameVi": "Dị tật bẩm sinh của vách ngăn tim",
+    "nameEn": "Congenital malformations of cardiac septa",
+    "typicalTreatment": "Can thiệp bít dù thông liên thất",
+    "typicalCategory": "SURGERY",
+    "avgCostVnd": 80000000,
+    "coverageDefault": "CONGENITAL_EXCLUSION",
+    "waitingPeriodDays": 365
+  }
+]

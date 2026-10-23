@@ -1,103 +1,157 @@
 ---
 name: papaya-tester-senior
 description: >-
-  Use this skill for senior QA leadership and comprehensive test engineering:
+  Use this skill for senior QA leadership, comprehensive test engineering, and audit reporting:
   designing deterministic test suites for AI workflows, validating the 3 official test cases,
-  hunting edge cases, asserting mathematical correctness, and enforcing the reproduce-first bug fixing discipline.
+  hunting edge cases, asserting mathematical correctness, and generating coverage/JUnit reports into test-reports/.
 ---
 
 # Papaya Senior Test Engineer Skill
 
-Skill này đóng vai trò là kim chỉ nam dành cho **Senior QA / Test Automation Architect**, đảm bảo tính đúng đắn tuyệt đối, độ tin cậy và khả năng tái lập (reproducibility) của hệ thống thẩm định bồi thường trước khi bàn giao cho người dùng hoặc nộp bài.
+Skill này đóng vai trò là kim chỉ nam dành cho **Senior QA / Test Automation Lead / Quality Auditor**, đảm bảo tính đúng đắn tuyệt đối, độ tin cậy, an toàn dữ liệu và khả năng tái lập (reproducibility) của hệ thống thẩm định bồi thường trước khi bàn giao hoặc triển khai.
 
 ---
 
-## 1. Kim Tự Tháp Kiểm Thử (Testing Pyramid)
+## 1. Chiến Lược Kiểm Thử Toàn Diện (Comprehensive Testing Strategy)
+
+Hệ thống thẩm định bồi thường AI kết hợp tính toán toán học bắt buộc phải được bao phủ qua 5 tầng kiểm soát chất lượng:
 
 ```
-                     / \
-                    /   \
-                   / E2E \       Playwright / Workstation UI Flows (Dual-Pane)
-                  /───────\
-                 /  Integ  \     NestJS Supertest + Mastra Workflow Execution
-                /───────────\
-               /  Unit Tests \   Pure Math Engine, Zod Parsers, MCP Tool Contracts
-              /───────────────\
+                      / \
+                     /   \
+                    / E2E \       Playwright / Dual-Pane Workstation Interaction Flows
+                   /───────\
+                  / Resil.  \     LLM Timeout, SSE Stream Dropping & Adverse Payloads
+                 /───────────\
+                /  Contract   \   Zod Schemas Boundary Validation (NestJS <-> Next.js)
+               /───────────────\
+              /   Integration   \ Deterministic 4-Step Mastra Workflow Execution
+             /───────────────────\
+            /     Unit Tests      \ Pure Math Engine, Copay/Sublimit, MCP Tool Contracts
+           /───────────────────────\
 ```
 
-1. **Unit Tests (Cực nhanh, bao phủ 100% Core Logic):**
-   - Kiểm thử độc lập 4 tools trong `packages/mcp-server`:
-     - `calculateBenefit`: Kiểm tra tính trừ tiền, mức miễn thường, copay, và trần hạn mức.
-     - `lookupPolicy`: Kiểm tra nạp đúng danh mục loại trừ và bảng quyền lợi.
-     - `checkMedicalNecessity`: Kiểm tra đối chiếu chẩn đoán ICD-10 và thủ thuật.
-     - `verifyDocument`: Kiểm tra phát hiện thiếu chứng từ, mộc đỏ, và cờ giả mạo.
-2. **Integration Tests (Khảo sát Luồng Mastra Workflow):**
-   - Kiểm thử Mastra Workflow 4 bước tuần tự bằng cách mock phản hồi LLM (Deterministic Test Fixtures) để đảm bảo test chạy ổn định, nhanh và không tốn tiền API trong CI/CD.
-3. **Contract Tests (Ranh giới I/O):**
-   - Đảm bảo mọi phản hồi từ NestJS sang Next.js khớp 100% với Zod schema trong `packages/shared`.
+1. **Unit Tests (Cực nhanh, bao phủ 100% Core Domain Logic):**
+   - Độc lập kiểm thử 4 tools trong `packages/mcp-server`:
+     - `calculateBenefit`: Kiểm tra tính toán trừ tiền, copay (đồng chi trả), sublimits (hạn mức phụ theo ngày/đợt), deductibles.
+     - `lookupPolicy`: Kiểm tra nạp chính sách bảo hiểm, thời hạn hiệu lực, kiểm tra danh mục loại trừ ICD-10.
+     - `checkMedicalNecessity`: Kiểm tra quy tắc lâm sàng (loại trừ thủ thuật thẩm mỹ, thực phẩm chức năng).
+     - `verifyDocument`: Kiểm tra phát hiện thiếu hóa đơn VAT, bản kê mờ nhòe, trạng thái chứng từ không hợp lệ.
+2. **Integration Tests (Khảo sát Luồng Mastra Workflow Tất Định):**
+   - Kiểm thử Mastra Workflow 4 bước tuần tự theo graph tất định (100% deterministic), mock phản hồi LLM hoặc sử dụng deterministic fixtures để đảm bảo test chạy ổn định, nhanh và không tốn chi phí token trong CI/CD.
+3. **Contract Tests (Bảo Vệ Ranh Giới Dữ Liệu I/O):**
+   - Đảm bảo 100% dữ liệu trao đổi giữa Backend NestJS và Frontend Next.js tuân thủ nghiêm ngặt Zod schema tại `packages/shared`.
+4. **Resilience & Fault Tolerance Tests (Kiểm Thử Khả Năng Chịu Lỗi):**
+   - Kiểm thử kịch bản timeout của LLM Provider, rớt kết nối stream Server-Sent Events (SSE), dịch vụ ngoài phản hồi lỗi 500.
+5. **End-to-End Tests (E2E Workstation Flows):**
+   - Kiểm thử luồng thao tác hoàn chỉnh từ lúc chọn hồ sơ, AI chạy thẩm định 4 bước, cập nhật thanh tiến trình, hiển thị Generative UI cards, và chuyên viên thực hiện Action Modal (Approve, Reject, Request Info, Override).
 
 ---
 
-## 2. Quy Chuẩn Kiểm Thử 3 Kịch Bản Bắt Buộc (Official Benchmark)
+## 2. Quy Chuẩn Kiểm Thử 3 Kịch Bản Bắt Buộc (Official Benchmark Suite)
 
-Senior Tester phải đảm bảo có bộ test tự động kiểm chứng chính xác 3 kịch bản:
+Senior Tester bắt buộc phải xây dựng và duy trì bộ test tự động kiểm chứng chính xác 3 kịch bản chuẩn hóa dựa trên schema thực tế của hệ thống:
 
 ```typescript
-describe('Claim Assessment Official Test Suite', () => {
-  // Kịch bản 1: Phê duyệt thường quy
-  it('TC-01: Should APPROVE valid outpatient claim with 20% copay', async () => {
-    const result = await workflow.execute(testCase01Payload);
-    expect(result.recommendation).toBe('APPROVE');
-    expect(result.benefit_calculation.submitted_amount).toBe(2500000);
-    expect(result.benefit_calculation.covered_amount).toBe(2000000);
-    expect(result.benefit_calculation.copay_amount).toBe(500000);
-    expect(result.benefit_calculation.remaining_balance_after_claim).toBe(43000000);
-    expect(result.policy_citations.length).toBeGreaterThanOrEqual(1);
+import { describe, it, expect } from 'vitest';
+import { executeClaimsAssessmentWorkflow } from '../../apps/api/src/modules/mastra/mastra.workflow';
+import { Claim, Policy } from '@papaya/shared';
+
+describe('Claim Assessment Official Benchmark Suite', () => {
+  // ---------------------------------------------------------------------------
+  // Kịch bản 1: Phê duyệt thường quy (TC01 - Viêm ruột thừa cấp)
+  // ---------------------------------------------------------------------------
+  it('TC-01: Should APPROVE valid acute appendicitis claim with 20% copay on surgery', async () => {
+    const report = await executeClaimsAssessmentWorkflow({ claim: tc01Claim, policy: goldPolicy });
+
+    expect(report.finalRecommendation).toBe('APPROVE');
+    expect(report.totalRequested).toBe(45000000);
+    expect(report.totalPayable).toBe(36000000); // 20% copay phẫu thuật, các mục khác theo rule
+    expect(report.totalDeductions).toBe(9000000);
+    expect(report.missingDocuments.length).toBe(0);
+    expect(report.confidenceScore).toBeGreaterThanOrEqual(90);
+    expect(report.steps.every(s => s.status === 'PASSED')).toBe(true);
   });
 
-  // Kịch bản 2: Từ chối do loại trừ
-  it('TC-02: Should REJECT cosmetic surgery under Clause 8.2', async () => {
-    const result = await workflow.execute(testCase02Payload);
-    expect(result.recommendation).toBe('REJECT');
-    expect(result.benefit_calculation.covered_amount).toBe(0);
-    expect(result.benefit_calculation.member_pays).toBe(35000000);
-    expect(result.policy_citations).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ clause_id: expect.stringMatching(/EXCL.*COSMETIC/i) }),
-      ]),
-    );
+  // ---------------------------------------------------------------------------
+  // Kịch bản 2: Từ chối do loại trừ (TC02 - Trào ngược GERD khớp exclusion K21)
+  // ---------------------------------------------------------------------------
+  it('TC-02: Should REJECT claim when diagnosis matches policy exclusions', async () => {
+    const report = await executeClaimsAssessmentWorkflow({ claim: tc02Claim, policy: goldPolicy });
+
+    expect(report.finalRecommendation).toBe('REJECT');
+    expect(report.policyExclusionsMatched).toContain('K21');
+    expect(report.steps.find(s => s.step === 'LOOKUP_POLICY')?.status).toBe('FAILED');
+    expect(report.totalPayable).toBe(0);
   });
 
-  // Kịch bản 3: Yêu cầu bổ sung chứng từ (Bẫy đề bài)
-  it('TC-03: Should REQUEST_MORE_INFO when discharge summary is missing (NEVER REJECT)', async () => {
-    const result = await workflow.execute(testCase03Payload);
-    expect(result.recommendation).toBe('REQUEST_MORE_INFO');
-    expect(result.recommendation).not.toBe('REJECT');
-    expect(result.document_review.status).toBe('INCOMPLETE');
-    expect(result.document_review.required_documents_missing).toContainEqual(
-      expect.stringMatching(/giấy ra viện|discharge/i),
-    );
+  // ---------------------------------------------------------------------------
+  // Kịch bản 3: Yêu cầu bổ sung chứng từ (TC03 - Thiếu VAT hoặc bản kê mờ)
+  // ---------------------------------------------------------------------------
+  it('TC-03: Should REQUEST_MORE_INFO when invoice is missing or invalid (NEVER auto-reject)', async () => {
+    const report = await executeClaimsAssessmentWorkflow({
+      claim: tc03Claim,
+      policy: silverPolicy,
+    });
+
+    expect(report.finalRecommendation).toBe('REQUEST_MORE_INFO');
+    expect(report.finalRecommendation).not.toBe('REJECT');
+    expect(report.missingDocuments.length).toBeGreaterThan(0);
+    expect(report.steps.find(s => s.step === 'VERIFY_DOCUMENT')?.status).toBe('ACTION_REQUIRED');
   });
 });
 ```
 
 ---
 
-## 3. Danh Mục Ca Biên Cần Thẩm Định (Edge Cases Checklist)
+## 3. Ma Trận Ca Biên & Kịch Bản Tiêu Cực (Edge Cases & Adverse Matrix)
 
-- [ ] **Biên Hạn mức (Limit Boundary):** Số tiền claim lớn hơn hạn mức còn lại (`submitted > balance`) -> Chỉ duyệt tối đa phần hạn mức còn lại (`PARTIALLY_COVERED`).
-- [ ] **Biên Thời gian chờ (Waiting Period Boundary):**
-  - Điều trị vào ngày thứ 29 (Thời gian chờ 30 ngày) -> Từ chối do chưa hết thời gian chờ.
-  - Điều trị vào ngày thứ 31 -> Chấp thuận hợp lệ.
-- [ ] **Số tiền Bất thường:** Hóa đơn bằng 0 hoặc âm -> Hệ thống bắt lỗi Validation Error ngay tại cổng vào, không chuyển cho Agent xử lý.
-- [ ] **Tài liệu Mâu thuẫn:** Tên trên hóa đơn viện phí khác tên thành viên trong hợp đồng -> Gắn cờ cảnh báo nghi vấn gian lận.
+Senior Tester phải chủ động kiểm chứng các ca biên đặc thù trong nghiệp vụ bảo hiểm y tế:
+
+| Nhóm Kiểm Thử                      | Trường Hợp Ca Biên                                                  | Kết Quả Mong Đợi (Assert)                                                        |
+| :--------------------------------- | :------------------------------------------------------------------ | :------------------------------------------------------------------------------- |
+| **Hạn mức năm (Annual Limit)**     | Số tiền claim vượt quá hạn mức còn lại (`requested > balance`)      | Chỉ duyệt tối đa phần hạn mức còn lại, phần vượt ghi nhận vào `deductibleAmount` |
+| **Hạn mức ngày (Daily Sublimit)**  | Tiền phòng 3.000.000 VND/ngày, hợp đồng giới hạn 1.500.000 VND/ngày | Trừ 1.500.000 VND/ngày vượt hạn mức vào deduction                                |
+| **Thời gian chờ (Waiting Period)** | Điều trị bệnh đặc biệt vào ngày 29 (thời gian chờ 30 ngày)          | Báo lỗi vi phạm thời gian chờ, không duyệt quyền lợi                             |
+| **Thời hạn hợp đồng**              | Ngày khám nằm ngoài khoảng `effectiveDate` đến `expiryDate`         | Từ chối bảo hiểm do hợp đồng chưa có hiệu lực hoặc đã hết hạn                    |
+| **Số tiền bất thường**             | Số tiền hóa đơn $\le 0$, số lượng âm, định dạng chuỗi chữ           | Bắt lỗi ngay tại Zod Schema Boundary Validation, HTTP 400                        |
+| **Tài liệu giả mạo/mờ**            | File scan chất lượng thấp, thiếu mộc đỏ bệnh viện                   | Cờ `INVALID` kích hoạt luồng `REQUEST_MORE_INFO`                                 |
+| **Thẩm mỹ / Không thiết yếu**      | Hóa đơn chứa thủ thuật thẩm mỹ, thực phẩm chức năng                 | `checkMedicalNecessity` gắn cờ cảnh báo, loại trừ 100% khoản mục                 |
 
 ---
 
-## 4. Kỷ Luật Sửa Lỗi (Bug-Fixing Protocol)
+## 4. Cơ Chế Xuất Báo Cáo Kiểm Thử Tự Động ([test-reports/](file:///Users/tranquocdung/Projects/papaya-asign/test-reports))
 
-Khi phát hiện bug hoặc reviewer phản hồi sai số:
+Mọi lần chạy kiểm thử phục vụ nghiệm thu, audit nội bộ hoặc trong pipeline CI/CD **bắt buộc phải xuất dữ liệu ra thư mục [test-reports/](file:///Users/tranquocdung/Projects/papaya-asign/test-reports)** với các định dạng tiêu chuẩn:
 
-1. **Bước 1 (Reproduce):** Viết một test case mô phỏng đúng điều kiện lỗi, chạy test và xác nhận kết quả `FAILED`.
-2. **Bước 2 (Fix):** Chỉnh sửa tối thiểu mã nguồn tại gốc rễ vấn đề.
-3. **Bước 3 (Verify):** Chạy lại test vừa viết (`PASSED`) và chạy toàn bộ test suite (`Regression Passed`) trước khi báo cáo hoàn thành.
+### 1. Cấu Trúc Báo Cáo Xuất Bản
+
+```text
+test-reports/
+├── coverage/                   # Báo cáo tỷ lệ bao phủ mã nguồn (Code Coverage)
+│   ├── index.html              # Báo cáo trực quan HTML mở trên trình duyệt
+│   ├── lcov.info               # Định dạng chuẩn SonarQube / Codecov
+│   └── coverage-final.json     # Dữ liệu phân tích chi tiết
+├── junit.xml                   # Báo cáo kết quả kiểm thử chuẩn JUnit (CI/CD Dashboard)
+└── summary.json                # Tổng hợp số ca pass/fail, thời gian thực thi và tỷ lệ đạt
+```
+
+### 2. Ngưỡng Chất Lượng Tối Thiểu (QA Quality Gates Thresholds)
+
+Mã nguồn chỉ được xem là đạt điều kiện bàn giao khi thỏa mãn các ngưỡng bao phủ tối thiểu:
+
+- **Statements:** $\ge 85\%$
+- **Branches:** $\ge 80\%$
+- **Functions:** $\ge 90\%$
+- **Lines:** $\ge 85\%$
+
+---
+
+## 5. Bộ Scripts & References Thực Thi Tự Động
+
+Skill này cung cấp các công cụ kiểm thử tự động hóa đính kèm:
+
+1. **[scripts/run-all-tests.sh](file:///Users/tranquocdung/Projects/papaya-asign/.agents/skills/papaya-tester-senior/scripts/run-all-tests.sh):** Script 1-lệnh thực thi toàn bộ test suite (Contracts, E2E, Unit), tự động tính toán code coverage và xuất đầy đủ báo cáo vào `test-reports/`.
+2. **[scripts/verify-coverage-threshold.sh](file:///Users/tranquocdung/Projects/papaya-asign/.agents/skills/papaya-tester-senior/scripts/verify-coverage-threshold.sh):** Script thẩm định ngưỡng Quality Gate tự động, phát cảnh báo nếu tỷ lệ test coverage bị tụt giảm.
+3. **[references/vitest.report.config.ts](file:///Users/tranquocdung/Projects/papaya-asign/.agents/skills/papaya-tester-senior/references/vitest.report.config.ts):** Mẫu cấu hình Vitest xuất báo cáo đa định dạng (HTML, LCOV, JUnit XML, JSON).
+4. **[references/test-matrix-checklist.md](file:///Users/tranquocdung/Projects/papaya-asign/.agents/skills/papaya-tester-senior/references/test-matrix-checklist.md):** Bảng ma trận chi tiết đối chiếu các ca kiểm thử nghiệp vụ bảo hiểm y tế.

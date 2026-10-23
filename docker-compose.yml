@@ -77,13 +77,34 @@ services:
       - papaya_network
 
   # ----------------------------------------------------------------------------
+  # MinIO (S3-Compatible Encrypted Object Storage for Claim Documents)
+  # Run with: docker compose --profile storage up -d
+  # ----------------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    container_name: papaya_minio
+    profiles: ['storage', 'full']
+    restart: unless-stopped
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: miniopassword
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - papaya_network
+
+  # ----------------------------------------------------------------------------
   # Local Ollama AI Engine (Optional - Profile: ai)
   # Run with: docker compose --profile ai up -d
   # ----------------------------------------------------------------------------
   ollama:
     image: ollama/ollama:latest
     container_name: papaya_ollama
-    profiles: ['ai']
+    profiles: ['ai', 'full']
     ports:
       - '11434:11434'
     volumes:
@@ -98,6 +119,8 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  minio_data:
     driver: local
   ollama_models:
     driver: local

@@ -4,6 +4,7 @@ import { ClaimsModule } from './modules/claims/claims.module';
 import { PoliciesModule } from './modules/policies/policies.module';
 import { MastraModule } from './modules/mastra/mastra.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { StorageModule } from './modules/storage/storage.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AuditModule } from './modules/audit/audit.module';
     PoliciesModule,
     MastraModule,
     AuditModule,
+    StorageModule,
   ],
 })
 export class AppModule {}

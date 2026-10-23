@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Claim, Policy, AssessmentReport } from '@papaya/shared';
-import { executeClaimsAssessmentWorkflow } from './mastra.workflow';
+import { executeClaimsAssessmentWorkflow } from './workflows/assessment.workflow';
+import { AssessorCopilotAgent } from './agents/assessor.agent';
 import { Observable, Subject } from 'rxjs';
 
 export interface SseEventPayload {
@@ -10,6 +11,8 @@ export interface SseEventPayload {
 @Injectable()
 export class MastraService {
   private readonly logger = new Logger(MastraService.name);
+
+  constructor(private readonly copilotAgent: AssessorCopilotAgent) {}
 
   /**
    * Run assessment workflow with real-time SSE event streaming
@@ -47,5 +50,29 @@ export class MastraService {
 
   async assessClaim(claim: Claim, policy: Policy): Promise<AssessmentReport> {
     return executeClaimsAssessmentWorkflow({ claim, policy });
+  }
+
+  /**
+   * Conversational interaction with Assessor Copilot Agent
+   */
+  async chatWithCopilot(params: {
+    query: string;
+    claim: Claim;
+    policy: Policy;
+    assessmentReport?: AssessmentReport;
+  }): Promise<string> {
+    return this.copilotAgent.answerAssessorQuery(params);
+  }
+
+  /**
+   * Streaming interaction with Assessor Copilot Agent
+   */
+  async streamCopilot(params: {
+    query: string;
+    claim: Claim;
+    policy: Policy;
+    assessmentReport?: AssessmentReport;
+  }) {
+    return this.copilotAgent.streamAssessorQuery(params);
   }
 }

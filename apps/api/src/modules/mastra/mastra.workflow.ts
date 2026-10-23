@@ -144,6 +144,14 @@ export async function executeClaimsAssessmentWorkflow(
     finalRecommendation = 'MANUAL_ESCALATION';
   }
 
+  let totalPayable = calculationResult.totalPayable;
+  let totalDeductions = calculationResult.totalDeductions;
+
+  if (finalRecommendation === 'REJECT') {
+    totalPayable = 0;
+    totalDeductions = calculationResult.totalRequested;
+  }
+
   const confidenceScore = Math.round(
     (steps.reduce((acc, s) => acc + (s.score || 0), 0) / (steps.length * 100)) * 100,
   );
@@ -154,10 +162,10 @@ export async function executeClaimsAssessmentWorkflow(
     policyNumber: claim.policyNumber,
     finalRecommendation,
     totalRequested: calculationResult.totalRequested,
-    totalPayable: calculationResult.totalPayable,
-    totalDeductions: calculationResult.totalDeductions,
+    totalPayable,
+    totalDeductions,
     confidenceScore,
-    executiveSummary: `Automated assessment completed for Claim ${claim.claimId}. Recommendation: ${finalRecommendation}. Total payable: ${calculationResult.totalPayable.toLocaleString()} VND.`,
+    executiveSummary: `Automated assessment completed for Claim ${claim.claimId}. Recommendation: ${finalRecommendation}. Total payable: ${totalPayable.toLocaleString()} VND.`,
     steps,
     breakdown: calculationResult.breakdown,
     missingDocuments: docResult.missingTypes,

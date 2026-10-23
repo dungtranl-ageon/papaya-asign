@@ -23,13 +23,13 @@ export interface VerifyDocumentOutput {
  * Pure function: Verifies mandatory documents for insurance claim
  */
 export async function verifyDocument(input: VerifyDocumentInput): Promise<VerifyDocumentOutput> {
-  const presentTypes = new Set(input.documents.map(d => d.docType));
+  const presentTypes = new Set<string>(input.documents.map(d => d.docType));
   const requiredTypes = input.requiredDocTypes ?? [
     'HOSPITAL_DISCHARGE',
     'DETAILED_INVOICE',
     'VAT_INVOICE',
   ];
-  const missingTypes = requiredTypes.filter(req => !presentTypes.has(req as any));
+  const missingTypes = requiredTypes.filter(req => !presentTypes.has(req));
 
   const invalidDocuments: Array<{ docId: string; reason: string }> = [];
   let verifiedDocumentsCount = 0;

@@ -1,0 +1,166 @@
+import { Claim } from '../../packages/shared/src';
+
+export const mockTc01Claim: Claim = {
+  claimId: 'CLM-2026-001',
+  policyNumber: 'POL-GOLD-99882',
+  patientName: 'Nguyen Van A',
+  nationalId: '001099012345',
+  hospitalName: 'FV Hospital',
+  admissionDate: '2026-03-10T08:30:00Z',
+  dischargeDate: '2026-03-13T14:00:00Z',
+  diagnosisIcd10: 'K35',
+  diagnosisDescription: 'Acute appendicitis with localized peritonitis',
+  status: 'SUBMITTED',
+  totalRequested: 45000000,
+  items: [
+    {
+      itemId: 'ITM-001',
+      description: 'Laparoscopic Appendectomy',
+      category: 'SURGERY',
+      amountRequested: 25000000,
+    },
+    {
+      itemId: 'ITM-002',
+      description: 'Inpatient Room & Board (3 days)',
+      category: 'INPATIENT',
+      amountRequested: 9000000,
+    },
+    {
+      itemId: 'ITM-003',
+      description: 'Post-op Antibiotics & Analgesics',
+      category: 'MEDICATION',
+      amountRequested: 6000000,
+    },
+    {
+      itemId: 'ITM-004',
+      description: 'Pre-operative Ultrasound & Blood Tests',
+      category: 'LABORATORY',
+      amountRequested: 5000000,
+    },
+  ],
+  documents: [
+    {
+      docId: 'DOC-001',
+      docType: 'HOSPITAL_DISCHARGE',
+      fileName: 'giay_ra_vien_nguyen_van_a.pdf',
+      uploadedAt: '2026-03-14T09:15:00Z',
+      status: 'VALID',
+    },
+    {
+      docId: 'DOC-002',
+      docType: 'DETAILED_INVOICE',
+      fileName: 'bang_ke_chi_tiet_vien_phi.pdf',
+      uploadedAt: '2026-03-14T09:15:00Z',
+      status: 'VALID',
+    },
+    {
+      docId: 'DOC-003',
+      docType: 'VAT_INVOICE',
+      fileName: 'hoa_don_vat_dien_tu_fv.pdf',
+      uploadedAt: '2026-03-14T09:15:00Z',
+      status: 'VALID',
+    },
+  ],
+  createdAt: '2026-03-14T10:00:00Z',
+  updatedAt: '2026-03-14T10:00:00Z',
+};
+
+export const mockTc02Claim: Claim = {
+  claimId: 'CLM-2026-002',
+  policyNumber: 'POL-GOLD-99882',
+  patientName: 'Nguyen Van A',
+  nationalId: '001099012345',
+  hospitalName: 'Tam Duc Heart Hospital',
+  admissionDate: '2026-03-01T09:00:00Z',
+  dischargeDate: '2026-03-01T16:00:00Z',
+  diagnosisIcd10: 'K21',
+  diagnosisDescription: 'Gastro-esophageal reflux disease (GERD)',
+  status: 'SUBMITTED',
+  totalRequested: 8500000,
+  items: [
+    {
+      itemId: 'ITM-005',
+      description: 'Gastroscopy and biopsy',
+      category: 'OUTPATIENT',
+      amountRequested: 4500000,
+    },
+    {
+      itemId: 'ITM-006',
+      description: 'Prescription PPI and mucosal protectants',
+      category: 'MEDICATION',
+      amountRequested: 4000000,
+    },
+  ],
+  documents: [
+    {
+      docId: 'DOC-005',
+      docType: 'HOSPITAL_DISCHARGE',
+      fileName: 'so_kham_benh.pdf',
+      uploadedAt: '2026-03-02T11:00:00Z',
+      status: 'VALID',
+    },
+    {
+      docId: 'DOC-006',
+      docType: 'DETAILED_INVOICE',
+      fileName: 'hoa_don_thuoc.pdf',
+      uploadedAt: '2026-03-02T11:00:00Z',
+      status: 'VALID',
+    },
+    {
+      docId: 'DOC-007',
+      docType: 'VAT_INVOICE',
+      fileName: 'vat_outpatient.pdf',
+      uploadedAt: '2026-03-02T11:00:00Z',
+      status: 'VALID',
+    },
+  ],
+  createdAt: '2026-03-02T14:00:00Z',
+  updatedAt: '2026-03-02T14:00:00Z',
+};
+
+export const mockTc03Claim: Claim = {
+  claimId: 'CLM-2026-003',
+  policyNumber: 'POL-SILVER-11223',
+  patientName: 'Tran Thi B',
+  nationalId: '079198054321',
+  hospitalName: 'Cho Ray Hospital',
+  admissionDate: '2026-02-15T10:00:00Z',
+  dischargeDate: '2026-02-18T12:00:00Z',
+  diagnosisIcd10: 'J20',
+  diagnosisDescription: 'Acute bronchitis due to unspecified organism',
+  status: 'SUBMITTED',
+  totalRequested: 12000000,
+  items: [
+    {
+      itemId: 'ITM-007',
+      description: 'Standard Inpatient Care',
+      category: 'INPATIENT',
+      amountRequested: 7500000,
+    },
+    {
+      itemId: 'ITM-008',
+      description: 'IV Antibiotics & Nebulization',
+      category: 'MEDICATION',
+      amountRequested: 4500000,
+    },
+  ],
+  documents: [
+    {
+      docId: 'DOC-008',
+      docType: 'HOSPITAL_DISCHARGE',
+      fileName: 'giay_ra_vien_cho_ray.pdf',
+      uploadedAt: '2026-02-19T08:30:00Z',
+      status: 'VALID',
+    },
+    {
+      docId: 'DOC-009',
+      docType: 'DETAILED_INVOICE',
+      fileName: 'bang_ke_mo_nhoe.pdf',
+      uploadedAt: '2026-02-19T08:30:00Z',
+      status: 'INVALID',
+      notes: 'Scan quality is blurred, unable to read invoice numbers',
+    },
+  ],
+  createdAt: '2026-02-19T09:00:00Z',
+  updatedAt: '2026-02-19T09:00:00Z',
+};

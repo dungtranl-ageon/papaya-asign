@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, FileText, CheckCircle2, AlertCircle, Bot, Send } from 'lucide-react';
+import { ShieldCheck, FileText, CheckCircle2, Bot, Send } from 'lucide-react';
 
 export function WorkstationLayout() {
   return (

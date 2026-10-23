@@ -53,7 +53,8 @@ Tài liệu này đặc tả chi tiết toàn bộ kiến trúc giao diện ngư
     ├── Modal A: Phê duyệt Bồi thường (Approve Confirmation & Payout Schedule)
     ├── Modal B: Từ chối Bồi thường (Rejection Notice & Appeal Deadline)
     ├── Modal C: Yêu cầu Bổ sung Tài liệu (Missing Document Checklist & SMS/Email Link)
-    └── Modal D: Ghi đè Số tiền / Quyết định (Manual Override Justification)
+    ├── Modal D: Ghi đè Số tiền / Quyết định (Manual Override Justification)
+    └── Modal E: Tiếp nhận & Nhập liệu Hồ sơ Mới (Claim Ingestion & Data Entry Modal)
 ```
 
 ---
@@ -68,7 +69,7 @@ Màn hình đầu tiên khi Assessor đăng nhập hệ thống, hiển thị da
 +----------------------------------------------------------------------------------------------------------------------------------+
 |  KPIs: [ 42 Pending Review ]  |  [ 15 Need More Info ]  |  [ 128 Approved Today ]  |  [ 4 High Risk / SLA Warning (⚠️) ]          |
 +----------------------------------------------------------------------------------------------------------------------------------+
-|  FILTERS: [All Types v]  [All Insurers v]  [Date Range: Last 30 Days v]  [Sort: SLA Urgency v]            [+ Export CSV] [Refresh] |
+|  FILTERS: [All Types v]  [All Insurers v]  [Date Range: Last 30 Days v]  [Sort: SLA Urgency v]  [+ Nhập Hồ Sơ Mới] [+ Export CSV]  |
 +----------------------------------------------------------------------------------------------------------------------------------+
 | [ ] CLAIM ID      | MEMBER NAME     | CLAIM TYPE  | DIAGNOSIS / ICD-10     | AMOUNT (VND) | SLA REMAINING | RISK | ACTION            |
 |----------------------------------------------------------------------------------------------------------------------------------|
@@ -284,6 +285,74 @@ Render trực tiếp khi tool `calculateBenefit` trả về kết quả:
 |                                                                              |
 |                             [ Hủy ]   [ Xác nhận Ghi đè Quyết định ]         |
 +------------------------------------------------------------------------------+
+```
+
+---
+
+### Modal E: Tiếp nhận & Nhập liệu Hồ sơ Mới (`ClaimIngestionModal`)
+
+- **Kích hoạt:** Khi Assessor hoặc Intake Staff bấm nút `[+ Nhập Hồ Sơ Mới]` tại thanh công cụ màn hình danh sách, hoặc dùng phím tắt `Cmd + N`.
+- **Mục tiêu UX:** Thu thập đầy đủ dữ liệu có cấu trúc cho hồ sơ mới hoặc nạp nhanh các kịch bản kiểm thử (Test Cases) chuẩn hóa cho AI Agent thẩm định.
+- **Vòng đời Kiểm định Chứng từ (Document Ingestion Lifecycle):**
+  1. **Upload & Phân loại:** Người dùng kéo thả tập tin và chỉ định loại tài liệu (`Giấy ra viện`, `Bảng kê chi tiết`, `Hóa đơn VAT`). Trạng thái ban đầu là `PENDING_VERIFICATION` (Chờ AI quét).
+  2. **Tự động Thẩm định bằng AI:** Khi bấm `Khởi chạy Thẩm định`, AI Agent gọi công cụ `verifyDocument` để kiểm định tính hợp lệ, phát hiện mờ nhòe, thiếu mộc/chữ ký hoặc thiếu chứng từ bắt buộc.
+  3. **Chế độ Giả lập QA (Test Simulation Toggle):** Cho phép chuyên viên QA cố tình gắn cờ chứng từ bị mờ (`INVALID`) hoặc thiếu (`MISSING`) để kiểm thử phản xạ `REQUEST_MORE_INFO` của AI Agent theo đúng yêu cầu Đề bài Challenge 11.
+- **Wireframe:**
+
+```
++--------------------------------------------------------------------------------------------------------------------+
+|  TẠO MỚI / TIẾP NHẬN HỒ SƠ YÊU CẦU BỒI THƯỜNG (CLAIM INGESTION MODAL)                                         [ X ] |
++--------------------------------------------------------------------------------------------------------------------+
+|  [⚡ NẠP NHANH MẪU TEST CASE]:                                                                                     |
+|  [ Mẫu TC-01: Phẫu thuật K35 (Duyệt) ]   [ Mẫu TC-02: Thẩm mỹ Z41 (Từ chối) ]   [ Mẫu TC-03: Thiếu chứng từ (Bổ sung) ] |
++--------------------------------------------------------------------------------------------------------------------+
+|                                                                                                                    |
+|  [PHẦN 1: THÔNG TIN HỘI VIÊN & HỢP ĐỒNG BẢO HIỂM]                                                                  |
+|  ----------------------------------------------------------------------------------------------------------------  |
+|  * Số Hợp đồng (Policy ID):                 * Tên Người được Bảo hiểm:          * Số CCCD / CMND:                  |
+|  [ POL-GOLD-99882                      v ]  [ Nguyễn Văn A                    ] [ 001099012345                   ] |
+|  Gói: Healthcare Gold (Hạn mức 500M/năm)    Hiệu lực: 01/01/2026 - 31/12/2026    Trạng thái HĐ: [✓ HIỆU LỰC]       |
+|                                                                                                                    |
+|  [PHẦN 2: THÔNG TIN KHÁM CHỮA BỆNH & CHẨN ĐOÁN Y KHOA]                                                             |
+|  ----------------------------------------------------------------------------------------------------------------  |
+|  * Cơ sở Y tế (Bệnh viện / Phòng khám):     * Ngày Nhập viện:                   * Ngày Xuất viện:                  |
+|  [ Bệnh viện FV (TP.HCM)              v ]   [ 2026-03-10  08:30              📅 ] [ 2026-03-13  14:00              📅 ] |
+|                                                                                                                    |
+|  * Chẩn đoán của Bác sĩ điều trị:                                               * Mã ICD-10 (Tự động chuẩn hóa):   |
+|  [ Viêm ruột thừa cấp có viêm phúc mạc cục bộ                                 ] [ K35 - Acute appendicitis   🔍 ] |
+|  Loại hình điều trị: (•) Nội trú (Inpatient)   ( ) Ngoại trú (Outpatient)   ( ) Nha khoa   ( ) Thai sản            |
+|                                                                                                                    |
+|  [PHẦN 3: BẢNG KÊ PHÂN TÁCH CHI PHÍ VIỆN PHÍ (CLAIM BREAKDOWN)]                                                    |
+|  ----------------------------------------------------------------------------------------------------------------  |
+|  STT | DIỄN GIẢI CHI PHÍ DỊCH VỤ                  | NHÓM QUYỀN LỢI               | SỐ TIỀN YÊU CẦU (VND) | THAO TÁC |
+|  ----+--------------------------------------------+------------------------------+-----------------------+----------|
+|  1   | Phẫu thuật nội soi cắt ruột thừa           | [ SURGERY (Phẫu thuật)   v ] | [ 25,000,000        ] | [ 🗑️ Xóa ] |
+|  2   | Tiền giường phòng nội trú tiêu chuẩn (3 ng)| [ INPATIENT (Tiền giường) v ] | [  9,000,000        ] | [ 🗑️ Xóa ] |
+|  3   | Thuốc kháng sinh và giảm đau sau phẫu thuật| [ MEDICATION (Thuốc men)  v ] | [  6,000,000        ] | [ 🗑️ Xóa ] |
+|  4   | Siêu âm ổ bụng & xét nghiệm máu cấp cứu    | [ LABORATORY (Xét nghiệm) v ] | [  5,000,000        ] | [ 🗑️ Xóa ] |
+|                                                                                                                    |
+|  [ + Thêm dòng chi phí mới ]                                  TỔNG CỘNG ĐỀ NGHỊ BỒI THƯỜNG: [ 45,000,000 VND ]     |
+|                                                                                                                    |
+|  [PHẦN 4: BỘ CHỨNG TỪ & HỒ SƠ Y TẾ ĐÍNH KÈM (DOCUMENT LIST)]                                                       |
+|  ----------------------------------------------------------------------------------------------------------------  |
+|  Checklist bắt buộc:  [✓] 1. Giấy ra viện       [✓] 2. Bảng kê chi phí          [!] 3. Hóa đơn VAT (Chưa có)       |
+|  +--------------------------------------------------------------------------------------------------------------+  |
+|  |  📂 Kéo thả tài liệu vào đây hoặc [ Chọn tệp tải lên ] (Hỗ trợ PDF, JPG, PNG - Tối đa 25MB)                   |  |
+|  +--------------------------------------------------------------------------------------------------------------+  |
+|  STT | TÊN TẬP TIN ĐÃ TẢI LÊN | PHÂN LOẠI CHỨNG TỪ         | TRẠNG THÁI KIỂM ĐỊNH       | THAO TÁC / GHI CHÚ        |
+|  ----+------------------------+----------------------------+----------------------------+---------------------------|
+|  1   | giay_ra_vien_01.pdf    | [ Giấy ra viện         v ] | ⏳ Chờ AI quét khi chạy HĐ  | [ 🗑️ Xóa ] [✓ Bản gốc]   |
+|  2   | bang_ke_chi_phi.jpg    | [ Bảng kê chi tiết BV  v ] | ⏳ Chờ AI quét khi chạy HĐ  | [ 🗑️ Xóa ] [Mẫu 01/BV]   |
+|                                                                                                                    |
+|  (*) Tùy chọn dành cho Kiểm thử (QA Simulation):                                                                   |
+|  [ ] Đánh dấu file số 2 bị mờ nhòe / thiếu thông tin để kiểm tra phản xạ REQUEST_MORE_INFO của AI Agent            |
+|                                                                                                                    |
+|  [PHẦN 5: GHI CHÚ CỦA TIẾP NHẬN VIÊN (INTAKE NOTES)]                                                               |
+|  [ Khách hàng nộp hồ sơ ngày 14/03/2026, còn hạn nộp 60 ngày theo quy tắc hợp đồng.                          ]  |
+|                                                                                                                    |
++--------------------------------------------------------------------------------------------------------------------+
+|  [ Hủy bỏ ]                    [ Lưu Hồ sơ Nháp (Draft) ]               [ 🚀 LƯU & KHỞI CHẠY THẨM ĐỊNH AI AGENT ]   |
++--------------------------------------------------------------------------------------------------------------------+
 ```
 
 ---

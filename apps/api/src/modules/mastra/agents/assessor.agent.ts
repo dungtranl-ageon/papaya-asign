@@ -7,13 +7,54 @@ import { PolicyRagService } from '../rag/policy-rag.service';
 import { Claim, Policy, AssessmentReport } from '@papaya/shared';
 import { sanitizeUserFacingText } from '../guardrails/jargon-filter.guardrail';
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 /**
  * Creates the provider model instance for Mastra
  */
 export function getMastraLanguageModel() {
-  const baseURL = process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1';
-  const apiKey = process.env.OPENAI_API_KEY || 'ollama';
-  const modelName = process.env.MODEL_NAME || 'llama3.3';
+  let baseURL = process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1';
+  let apiKey = process.env.OPENAI_API_KEY || 'ollama';
+  let modelName = process.env.MODEL_NAME || 'gemma4:31b-cloud';
+
+  // Read latest .env directly if process.env has stale or uninitialized values
+  try {
+    const candidatePaths = [
+      path.resolve(process.cwd(), '../../.env'),
+      path.resolve(process.cwd(), '../.env'),
+      path.resolve(process.cwd(), '.env'),
+      path.resolve(__dirname, '../../../../../../.env'),
+    ];
+    for (const envPath of candidatePaths) {
+      if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, 'utf8');
+        const baseMatch = content.match(/OPENAI_BASE_URL=["']?([^"'\r\n]+)["']?/);
+        if (baseMatch && baseMatch[1]) baseURL = baseMatch[1].trim();
+        const keyMatch = content.match(/OPENAI_API_KEY=["']?([^"'\r\n]+)["']?/);
+        if (keyMatch && keyMatch[1]) apiKey = keyMatch[1].trim();
+        const modelMatch = content.match(/MODEL_NAME=["']?([^"'\r\n]+)["']?/);
+        if (modelMatch && modelMatch[1]) modelName = modelMatch[1].trim();
+        break;
+      }
+    }
+  } catch {
+    // Continue with existing process.env
+  }
+
+  // Defensive auto-correction: ollama.com requires HTTPS to prevent HTTP 301 redirect failure on POST
+  if (baseURL.startsWith('http://ollama.com')) {
+    baseURL = baseURL.replace('http://ollama.com', 'https://ollama.com');
+  }
+
+  // Defensive fallback: muse-spark-open requires a paid Pro plan on Ollama Cloud.
+  // Use gemma4:31b-cloud (confirmed available on Free plan).
+  if (
+    baseURL.includes('ollama.com') &&
+    (modelName.includes('muse-spark-open') || modelName === 'llama3.3')
+  ) {
+    modelName = 'gemma4:31b-cloud';
+  }
 
   const provider = createOpenAI({
     baseURL,

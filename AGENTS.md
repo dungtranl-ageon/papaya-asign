@@ -49,9 +49,24 @@ Tài liệu này xác định các nguyên tắc, chuẩn mực phát triển ph
 
 ---
 
-## 4. Cấu trúc Quản trị Workspace Antigravity (`.agents/`)
+## 4. Kiến Trúc Kỹ Thuật Đã Thống Nhất (Monorepo & Mastra Engine)
 
-* **Rules:** Nằm tại [.agents/rules/](file:///Users/tranquocdung/Projects/papaya-asign/.agents/rules) (Quy chuẩn kỹ thuật, bảo mật, kiểm thử, ranh giới MCP).
-* **Skills:** Nằm tại [.agents/skills/](file:///Users/tranquocdung/Projects/papaya-asign/.agents/skills) (Kỹ năng thao tác môi trường, docker, kiểm thử).
+1. **Cấu trúc Monorepo (pnpm + Turborepo):**
+   * `apps/web`: Next.js 15+ App Router, Vercel AI SDK (`ai/react`), TailwindCSS thuần + `lucide-react`.
+   * `apps/api`: NestJS 10+, Mastra Core (`@mastra/core`), Prisma ORM (SQLite / PostgreSQL), SSE streaming.
+   * `packages/shared`: Zod schemas & TypeScript types dùng chung.
+   * `packages/mcp-server`: 4 Tools nghiệp vụ (Dual-Export: Stdio MCP Server + Mastra Direct Import).
+2. **Nguyên tắc Hybrid Mastra:**
+   * Bắt buộc dùng **Mastra Workflow** khóa cứng 4 bước thẩm định tuần tự: `verifyDocument` -> `lookupPolicy` -> `checkMedicalNecessity` -> `calculateBenefit`.
+   * Dùng **Mastra Agent** cho luồng đối thoại hỏi đáp với chuyên viên bồi thường.
+3. **Chi tiết tra cứu:** [.agents/rules/04_tech_stack_architecture_standards.md](file:///Users/tranquocdung/Projects/papaya-asign/.agents/rules/04_tech_stack_architecture_standards.md) và [docs/07_TECH_STACK_AND_IMPLEMENTATION_BLUEPRINT.md](file:///Users/tranquocdung/Projects/papaya-asign/docs/07_TECH_STACK_AND_IMPLEMENTATION_BLUEPRINT.md).
+
+---
+
+## 5. Cấu trúc Quản trị Workspace Antigravity (`.agents/`)
+
+* **Rules:** Nằm tại [.agents/rules/](file:///Users/tranquocdung/Projects/papaya-asign/.agents/rules) (Quy chuẩn kỹ thuật, bảo mật, kiểm thử, ranh giới MCP, kiến trúc Monorepo).
+* **Skills:** Nằm tại [.agents/skills/](file:///Users/tranquocdung/Projects/papaya-asign/.agents/skills) (Các kỹ năng với tiền tố `papaya-`).
 * **MCP Servers:** Cấu hình tại [.agents/mcp_config.json](file:///Users/tranquocdung/Projects/papaya-asign/.agents/mcp_config.json).
-* **Tài liệu Nghiệp vụ & Kiến trúc Dự án:** Tra cứu riêng tại [docs/README.md](file:///Users/tranquocdung/Projects/papaya-asign/docs/README.md) (tách biệt hoàn toàn với quy chuẩn phát triển AI).
+* **Tài liệu Nghiệp vụ & Kiến trúc Dự án:** Tra cứu riêng tại [docs/README.md](file:///Users/tranquocdung/Projects/papaya-asign/docs/README.md).
+

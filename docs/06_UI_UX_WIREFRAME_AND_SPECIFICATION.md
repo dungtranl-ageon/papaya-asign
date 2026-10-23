@@ -142,6 +142,77 @@ flowchart TD
 
 ---
 
+## 2.2. Sơ đồ Vòng đời Trạng thái Hồ sơ (Claim Status Lifecycle State Machine)
+
+Mọi yêu cầu bồi thường trong hệ thống dịch chuyển trạng thái theo mô hình máy trạng thái hữu hạn (FSM) dưới đây:
+
+```mermaid
+stateDiagram-v2
+    [*] --> SUBMITTED: Khách hàng nộp hồ sơ / Intake tạo mới
+
+    SUBMITTED --> UNDER_ASSESSMENT: Chuyên viên mở hồ sơ & bấm "Khởi chạy Thẩm định"
+
+    state UNDER_ASSESSMENT {
+        [*] --> Verifying_Documents: Step 1 (verifyDocument)
+        Verifying_Documents --> Looking_Up_Policy: Hợp lệ / Tiếp tục
+        Looking_Up_Policy --> Checking_Necessity: Step 2 (lookupPolicy)
+        Checking_Necessity --> Calculating_Benefits: Step 3 (checkMedicalNecessity)
+        Calculating_Benefits --> Report_Generated: Step 4 (calculateBenefit)
+    }
+
+    UNDER_ASSESSMENT --> EVALUATED: Báo cáo AI hoàn tất kèm khuyến nghị
+
+    state EVALUATED {
+        [*] --> Pending_Human_Review
+    }
+
+    EVALUATED --> APPROVED: Assessor duyệt (Khớp điều khoản, chi trả)
+    EVALUATED --> REJECTED: Assessor từ chối (Thuộc điểm loại trừ)
+    EVALUATED --> NEED_INFO: Assessor yêu cầu bổ sung (Thiếu hóa đơn/mờ)
+    EVALUATED --> OVERRIDDEN: Assessor ghi đè kết quả (Có lý do Audit)
+
+    NEED_INFO --> SUBMITTED: Khách hàng upload bổ sung qua Magic Link
+    OVERRIDDEN --> APPROVED: Hoàn tất phê duyệt sau ghi đè số tiền
+
+    APPROVED --> [*]: Đóng hồ sơ & Đẩy lệnh thanh toán sang ERP
+    REJECTED --> [*]: Phát hành thư từ chối (Thời hạn khiếu nại 30 ngày)
+```
+
+---
+
+## 2.3. Sơ đồ Cây Quyết định Thẩm định AI (AI Assessment Decision Tree Flowchart)
+
+Biểu đồ mô tả quy tắc logic 4 bước tất định (100% deterministic) được mã hóa trong Mastra Workflow:
+
+```mermaid
+flowchart TD
+    Start([Bắt đầu Thẩm định Hồ sơ]) --> Step1{1. Kiểm tra Chứng từ<br/>verifyDocument}
+
+    Step1 -->|Thiếu chứng từ bắt buộc<br/>hoặc bản scan mờ nhòe| ReqInfo["Đề xuất: REQUEST_MORE_INFO<br/>- Liệt kê chứng từ thiếu<br/>- Tạo Magic Link bổ sung"]
+    Step1 -->|Đầy đủ & Hợp lệ| Step2{2. Kiểm tra Thời hạn HĐ<br/>lookupPolicy}
+
+    Step2 -->|Hợp đồng hết hạn / Chưa kích hoạt<br/>hoặc vi phạm thời gian chờ| RejPolicy["Đề xuất: REJECT<br/>Trích dẫn điều khoản thời hạn/chờ"]
+    Step2 -->|Hợp đồng đang hiệu lực| Step3{3. Kiểm tra Chỉ định Y khoa<br/>checkMedicalNecessity}
+
+    Step3 -->|Phác đồ không phù hợp chẩn đoán ICD-10| RejMed["Đề xuất: REJECT hoặc Yêu cầu Giám định Y khoa"]
+    Step3 -->|Chỉ định hợp lý theo hướng dẫn BYT| Step4{4. Kiểm tra Điểm Loại trừ<br/>Policy Exclusions}
+
+    Step4 -->|Rơi vào danh mục loại trừ<br/>VD: Thẩm mỹ Z41, bệnh có sẵn| RejExcl["Đề xuất: REJECT<br/>Trích dẫn chính xác Điều khoản Loại trừ"]
+    Step4 -->|Không thuộc điểm loại trừ| Step5[5. Chiết tính Quyền lợi<br/>calculateBenefit]
+
+    Step5 --> Step5_Math["Tính toán số tiền:<br/>- Áp dụng Copay % theo nhóm quyền lợi<br/>- Khấu trừ Deductible hằng năm<br/>- Kiểm tra số dư Hạn mức còn lại"]
+
+    Step5_Math --> FinalApprove["Đề xuất: APPROVE<br/>Hiển thị Thẻ Chiết tính Viện phí Generative UI"]
+
+    ReqInfo --> HITL[Chuyên viên Thẩm định Xem xét & Ra Quyết định Cuối]
+    RejPolicy --> HITL
+    RejMed --> HITL
+    RejExcl --> HITL
+    FinalApprove --> HITL
+```
+
+---
+
 ## 3. Wireframe Màn hình 1: Danh sách Hồ sơ Bồi thường (Claims Queue & Inbox)
 
 Màn hình đầu tiên khi Assessor đăng nhập hệ thống, hiển thị danh sách hồ sơ bồi thường cần xử lý, cảnh báo hạn xử lý (SLA) và cờ rủi ro gian lận.

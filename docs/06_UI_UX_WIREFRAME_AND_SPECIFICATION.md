@@ -96,33 +96,33 @@ flowchart TD
     end
 
     %% Screen transitions
-    Queue -->|Click nút tạo mới| BtnNewClaim --> FormIngest
-    FormIngest -->|Hủy bỏ / Esc| Queue
-    FormIngest -->|Lưu & Chuyển sang thẩm định| BtnSaveSubmit --> Workstation
+    Queue -->|"Click nút tạo mới"| BtnNewClaim --> FormIngest
+    FormIngest -->|"Hủy bỏ / Phím Esc"| Queue
+    FormIngest -->|"Lưu & Chuyển sang thẩm định"| BtnSaveSubmit --> Workstation
 
-    Queue -->|Click xem chi tiết| BtnAssess --> Workstation
+    Queue -->|"Click xem chi tiết"| BtnAssess --> Workstation
     Workstation --> LeftPane
     Workstation --> RightPane
 
-    Workstation -->|Bấm nút Back| BtnBack --> Queue
+    Workstation -->|"Bấm nút Back"| BtnBack --> Queue
 
     %% Drawer triggers
-    RightPane -.->|Click icon Hợp đồng| PolicyDrawer
-    RightPane -.->|Click icon Audit Log| AuditDrawer
-    PolicyDrawer -.->|Đóng / Esc| Workstation
-    AuditDrawer -.->|Đóng / Esc| Workstation
+    RightPane -.->|"Click icon Hợp đồng"| PolicyDrawer
+    RightPane -.->|"Click icon Audit Log"| AuditDrawer
+    PolicyDrawer -.->|"Đóng / Phím Esc"| Workstation
+    AuditDrawer -.->|"Đóng / Phím Esc"| Workstation
 
     %% Modal triggers
-    LeftPane -->|Bấm [Phê duyệt] (Cmd+Enter)| ModalApprove
-    LeftPane -->|Bấm [Từ chối] (Cmd+Shift+R)| ModalReject
-    LeftPane -->|Bấm [Bổ sung] (Cmd+Shift+I)| ModalNeedInfo
-    LeftPane -->|Bấm [Ghi đè]| ModalOverride
+    LeftPane -->|"Bấm Phê duyệt (Cmd + Enter)"| ModalApprove
+    LeftPane -->|"Bấm Từ chối (Cmd + Shift + R)"| ModalReject
+    LeftPane -->|"Bấm Bổ sung chứng từ (Cmd + Shift + I)"| ModalNeedInfo
+    LeftPane -->|"Bấm Ghi đè thủ công"| ModalOverride
 
     %% Modal completion loops
-    ModalApprove -->|Xác nhận thành công -> Cập nhật APPROVED| Queue
-    ModalReject -->|Xác nhận từ chối -> Cập nhật REJECTED| Queue
-    ModalNeedInfo -->|Gửi yêu cầu -> Cập nhật NEED_INFO| Queue
-    ModalOverride -->|Lưu quyết định ghi đè| Workstation
+    ModalApprove -->|"Phê duyệt xong: Cập nhật APPROVED"| Queue
+    ModalReject -->|"Từ chối xong: Cập nhật REJECTED"| Queue
+    ModalNeedInfo -->|"Yêu cầu bổ sung: Cập nhật NEED_INFO"| Queue
+    ModalOverride -->|"Lưu quyết định ghi đè"| Workstation
 ```
 
 ### Bảng Ma trận Chuyển dịch Màn hình (Screen Transition Matrix)

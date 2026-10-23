@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Sse } from '@nestjs/common';
+import { Controller, Get, Post, Param, Sse, Body } from '@nestjs/common';
 import { ClaimsService } from './claims.service';
 import { Claim, AssessmentReport } from '@papaya/shared';
 import { Observable } from 'rxjs';
@@ -26,5 +26,24 @@ export class ClaimsController {
   @Sse(':id/assess/stream')
   assessClaimStream(@Param('id') id: string): Observable<SseEventPayload> {
     return this.claimsService.assessClaimStream(id);
+  }
+
+  @Post(':id/chat')
+  async chatWithAgent(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      message?: string;
+      query?: string;
+      messages?: Array<{ content: string; role: string }>;
+    },
+  ): Promise<{ reply: string }> {
+    const query =
+      body.message ||
+      body.query ||
+      (body.messages && body.messages[body.messages.length - 1]?.content) ||
+      '';
+    const reply = await this.claimsService.chatWithAgent(id, query);
+    return { reply };
   }
 }

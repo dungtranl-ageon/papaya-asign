@@ -90,4 +90,21 @@ export class ClaimsService {
 
     return subject;
   }
+
+  /**
+   * Interact with Assessor Copilot Agent for a specific claim
+   */
+  async chatWithAgent(claimId: string, query: string): Promise<string> {
+    const claim = await this.getClaimById(claimId);
+    const policy = await this.policiesService.findByNumber(claim.policyNumber);
+    if (!policy) {
+      throw new NotFoundException(`Policy ${claim.policyNumber} not found`);
+    }
+
+    return this.mastraService.chatWithCopilot({
+      query,
+      claim,
+      policy,
+    });
+  }
 }

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { BookOpen, X, ExternalLink, ShieldCheck } from 'lucide-react';
+import { POLICY_CLAUSE_DICTIONARY } from '../../constants/policy-clauses';
 
 export interface PolicyCitationPillProps {
   clauseId: string;
@@ -13,48 +14,6 @@ export interface PolicyCitationPillProps {
   onOpenPolicyBrowser?: (clauseId: string) => void;
   onOpenInBrowser?: (clauseId: string) => void;
 }
-
-const POLICY_CLAUSE_DICTIONARY: Record<
-  string,
-  { title: string; content: string; chapter: string }
-> = {
-  'CLAUSE-GEN-POL-GOLD-99882-01': {
-    chapter: 'Chương I - Quy tắc Chung',
-    title: 'Hiệu lực Hợp đồng & Hạn mức Năm',
-    content:
-      'Hợp đồng số POL-GOLD-99882 cấp cho Nguyen Van A (CCCD: 001099012345). Hiệu lực từ 2026-01-01T00:00:00Z đến 2026-12-31T23:59:59Z. Hạn mức năm tối đa: 500,000,000 VND.',
-  },
-  'CLAUSE-BEN-POL-GOLD-99882-SURGERY': {
-    chapter: 'Chương II - Quyền lợi Bảo hiểm',
-    title: 'Quyền lợi Phẫu thuật (Surgery)',
-    content:
-      'Hạn mức tối đa mỗi lượt: 50,000,000 VND. Hạn mức năm: 150,000,000 VND. Tỷ lệ đồng chi trả (Copay): 20% áp dụng cho tất cả các chi phí phòng mổ, phẫu thuật viên và gây mê hồi sức.',
-  },
-  'CLAUSE-BEN-POL-GOLD-99882-INPATIENT': {
-    chapter: 'Chương II - Quyền lợi Bảo hiểm',
-    title: 'Quyền lợi Điều trị Nội trú (Inpatient Room & Board)',
-    content:
-      'Hạn mức tối đa mỗi lượt: 60,000,000 VND. Hạn mức năm: 200,000,000 VND. Tỷ lệ đồng chi trả (Copay): 10%. Giới hạn chi trả tiền ngày giường phòng: tối đa 3,000,000 VND/ngày.',
-  },
-  'POLICY-SEC-14.2': {
-    chapter: 'Chương II - Quyền lợi Bảo hiểm',
-    title: 'Quy tắc Tỷ lệ Đồng chi trả Nội trú 20%',
-    content:
-      'Áp dụng đồng chi trả 20% đối với các chi phí nội trú tại bệnh viện quốc tế/ngoài công lập không thuộc mạng lưới bảo lãnh trực tiếp.',
-  },
-  'POLICY-SEC-14.3': {
-    chapter: 'Chương IV - Điểm Loại trừ Trách nhiệm Bảo hiểm',
-    title: 'Loại trừ Thực phẩm chức năng & Dược mỹ phẩm',
-    content:
-      'Không chi trả cho thuốc bổ, thực phẩm chức năng tăng cường men gan, vitamin bồi bổ trừ trường hợp đặc trị cấp tính theo phác đồ Bộ Y Tế.',
-  },
-  'POLICY-SEC-6.1': {
-    chapter: 'Chương III - Thời gian chờ & Miễn trừ',
-    title: 'Quy định Miễn Thời gian chờ Cấp cứu',
-    content:
-      'Trường hợp cấp cứu y khoa đe dọa tính mạng (viêm ruột thừa cấp vỡ mủ) được miễn áp dụng thời gian chờ 30 ngày.',
-  },
-};
 
 export function PolicyCitationPill({
   clauseId,

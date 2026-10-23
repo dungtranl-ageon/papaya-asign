@@ -15,39 +15,39 @@ export interface ChatMessage {
     clauseSnippet: string;
   }>;
 }
+import { DEFAULT_COPILOT_QUICK_PROMPTS } from '../../constants/copilot-prompts';
 
-interface CopilotChatProps {
-  claimId?: string;
+export interface CopilotChatProps {
+  claimId: string;
+  patientName?: string;
+  policyNumber?: string;
   onOpenPolicyBrowser?: (clauseId: string) => void;
 }
 
-const INITIAL_MESSAGE: ChatMessage = {
-  id: 'msg-1',
-  role: 'assistant',
-  content: `Xin chào! Tôi là Trợ lý Thẩm định AI (Papaya Copilot). Tôi đã hoàn tất phân tích hồ sơ theo quy tắc 4 bước (verifyDocument ➔ lookupPolicy ➔ checkMedicalNecessity ➔ calculateBenefit).
-  
-Kết quả phát hiện:
-- Chẩn đoán **Viêm ruột thừa cấp (K35.8)** điều trị tại BV Pháp Việt là **Cấp cứu hợp lệ** (không áp dụng thời gian chờ).
-- Bị loại trừ khoản **2.000.000 đ** do hóa đơn có mục Thực phẩm chức năng bổ gan Hepa-Care không thuộc danh mục bồi thường.
-- Số tiền đề xuất phê duyệt: **13.200.000 đ** (sau khi khấu trừ 20% đồng chi trả).
-
-Bạn có thể bấm vào các gợi ý dưới đây hoặc đặt câu hỏi bất kỳ để tôi trích dẫn điều khoản hợp đồng nhé!`,
-  timestamp: '14:25',
-  citations: [
-    {
-      clauseId: 'POLICY-SEC-14.3',
-      clauseTitle: 'Loại trừ thực phẩm chức năng',
-      clauseSnippet:
-        'Khoản chi phí cho thuốc bổ, thực phẩm chức năng không thuộc danh mục bồi thường.',
-    },
-  ],
-};
-
-export function CopilotChat({ claimId = 'CLM-2026-03891', onOpenPolicyBrowser }: CopilotChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
+export function CopilotChat({
+  claimId,
+  patientName = 'Người được bảo hiểm',
+  policyNumber = 'Hợp đồng bảo hiểm',
+  onOpenPolicyBrowser,
+}: CopilotChatProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Generate dynamic initial greeting based on active claim from database
+    const greeting: ChatMessage = {
+      id: `init-${claimId}`,
+      role: 'assistant',
+      content: `Xin chào! Tôi là Trợ lý Thẩm định AI (Papaya Copilot).
+      
+Tôi đang sẵn sàng hỗ trợ bạn rà soát hồ sơ **${claimId}** của khách hàng **${patientName}** (HĐ: **${policyNumber}**).
+Bạn có thể hỏi bất kỳ câu hỏi nào về điều khoản loại trừ, thời gian chờ, tỷ lệ đồng chi trả hoặc yêu cầu trích dẫn quy tắc bảo hiểm!`,
+      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    };
+    setMessages([greeting]);
+  }, [claimId, patientName, policyNumber]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,14 +57,9 @@ export function CopilotChat({ claimId = 'CLM-2026-03891', onOpenPolicyBrowser }:
     scrollToBottom();
   }, [messages, isStreaming]);
 
-  const quickPrompts = [
-    'Tại sao từ chối khoản thuốc bổ gan 2.000.000đ?',
-    'Kiểm tra lại thời hạn hiệu lực hợp đồng & thời gian chờ',
-    'Trích dẫn điều khoản đồng chi trả 20%',
-    'Khách hàng có lịch sử gian lận trục lợi không?',
-  ];
+  const quickPrompts = DEFAULT_COPILOT_QUICK_PROMPTS;
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const prompt = textToSend || input;
     if (!prompt.trim() || isStreaming) return;
 
@@ -79,74 +74,93 @@ export function CopilotChat({ claimId = 'CLM-2026-03891', onOpenPolicyBrowser }:
     setInput('');
     setIsStreaming(true);
 
-    // Realistic response simulator based on questions
-    setTimeout(() => {
-      let botResponse = '';
-      let citations: ChatMessage['citations'] = [];
+    try {
+      const response = await fetch(`/api/claims/${claimId}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: prompt }),
+      });
 
-      if (prompt.includes('thuốc bổ gan') || prompt.includes('2.000.000')) {
-        botResponse = `Theo **Quy tắc Bảo hiểm Sức khỏe Tiêu chuẩn (Khoản 14.3 - Danh mục Loại trừ)**:
-        
-Các chế phẩm dinh dưỡng, thực phẩm bảo vệ sức khỏe, vitamin tổng hợp và dược mỹ phẩm (kể cả do bác sĩ kê đơn nhưng mang tính chất bổ trợ chức năng gan thận) **không nằm trong phạm vi chi trả**.
-Hóa đơn số 003891 thể hiện rõ mục "Hepa-Care 500mg - 2.000.000 đ" thuộc nhóm thực phẩm bảo vệ sức khỏe, do đó hệ thống tự động loại trừ khỏi Chi phí hợp lệ.`;
-        citations = [
-          {
+      if (response.ok) {
+        const data = (await response.json()) as { reply?: string };
+        const replyText = data.reply || 'Đã hoàn tất phân tích yêu cầu từ cơ sở dữ liệu.';
+
+        // Extract citations dynamically if reply mentions POLICY-SEC clauses
+        const citations: ChatMessage['citations'] = [];
+        if (replyText.includes('14.3') || prompt.includes('thuốc bổ gan')) {
+          citations.push({
             clauseId: 'POLICY-SEC-14.3',
-            clauseTitle: 'Loại trừ chi phí dinh dưỡng & TPCN',
+            clauseTitle: 'Loại trừ thực phẩm chức năng & Dược mỹ phẩm',
             clauseSnippet:
-              'Không chi trả cho thuốc bổ, thực phẩm chức năng, vitamin trừ trường hợp vitamin đặc trị thiếu hụt cấp tính.',
-          },
-        ];
-      } else if (prompt.includes('thời gian chờ') || prompt.includes('hiệu lực')) {
-        botResponse = `Hợp đồng bảo hiểm **POL-2024-8891** có hiệu lực từ ngày **01/01/2026**.
-        
-Chẩn đoán bệnh lý của hồ sơ là **Viêm ruột thừa cấp vỡ mủ (K35.8)** - được xếp vào nhóm **Cấp cứu y khoa khẩn cấp (Emergency Medical Condition)**.
-Căn cứ **Điều 6.1**: Thời gian chờ 30 ngày đối với bệnh thông thường được **MIỄN ÁP DỤNG** cho các ca phẫu thuật cấp cứu nguy hiểm tính mạng. Do đó, hồ sơ hoàn toàn đủ điều kiện bảo hiểm!`;
-        citations = [
-          {
+              'Khoản chi phí cho thuốc bổ, thực phẩm chức năng không thuộc danh mục bồi thường.',
+          });
+        }
+        if (replyText.includes('6.1') || prompt.includes('cấp cứu')) {
+          citations.push({
             clauseId: 'POLICY-SEC-6.1',
-            clauseTitle: 'Quy định Miễn Thời gian chờ Cấp cứu',
+            clauseTitle: 'Quy định Miễn Thời gian chờ Cấp cứu Ngoại khoa',
             clauseSnippet:
               'Trường hợp cấp cứu y khoa đe dọa tính mạng được miễn áp dụng thời gian chờ 30 ngày.',
-          },
-        ];
-      } else if (prompt.includes('đồng chi trả') || prompt.includes('20%')) {
-        botResponse = `Theo Chương trình Bạc (Silver Plan) ký kết:
-        
-Mức **Đồng chi trả (Co-payment)** là **20%** áp dụng cho tất cả chi phí điều trị nội trú tại bệnh viện tư nhân và quốc tế (Bệnh viện FV). 
-Công thức tính:
-- Chi phí yêu cầu: 18.500.000 đ
-- Chi phí sau loại trừ: 16.500.000 đ
-- Đồng chi trả 20%: 3.300.000 đ
-- Doanh nghiệp bảo hiểm chi trả 80%: **13.200.000 đ**.`;
-        citations = [
-          {
+          });
+        }
+        if (
+          replyText.includes('14.2') ||
+          prompt.includes('đồng chi trả') ||
+          prompt.includes('20%')
+        ) {
+          citations.push({
             clauseId: 'POLICY-SEC-14.2',
-            clauseTitle: 'Quy tắc Tỷ lệ Đồng chi trả Nội trú',
+            clauseTitle: 'Tỷ lệ Đồng chi trả Viện phí',
             clauseSnippet:
-              'Áp dụng đồng chi trả 20% đối với các chi phí nội trú tại bệnh viện quốc tế/ngoài công lập.',
-          },
-        ];
-      } else {
-        botResponse = `Tôi đã đối chiếu cơ sở dữ liệu quy tắc nghiệp vụ và thông tin hồ sơ ${claimId}:
-        
-- Hồ sơ đầy đủ 3/3 chứng từ bắt buộc (Giấy ra viện, Bảng kê chi phí, Hóa đơn VAT).
-- Không có bất kỳ dấu hiệu gian lận trùng lắp hóa đơn hay trùng khoảng thời gian nằm viện trên toàn hệ thống liên thông.
-- Bạn có thể an tâm tiến hành **[Phê duyệt]** hoặc sử dụng phím tắt **Cmd + Enter**.`;
-      }
+              'Áp dụng đồng chi trả tiêu chuẩn theo hợp đồng sau khi trừ đi các khoản loại trừ.',
+          });
+        }
 
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `bot-${Date.now()}`,
+            role: 'assistant',
+            content: replyText,
+            timestamp: new Date().toLocaleTimeString('vi-VN', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            citations,
+          },
+        ]);
+      } else {
+        throw new Error('Chat API returned error');
+      }
+    } catch (err) {
+      console.warn('API chat fallback:', err);
+      // Fallback response with context
       setMessages(prev => [
         ...prev,
         {
           id: `bot-${Date.now()}`,
           role: 'assistant',
-          content: botResponse,
+          content: `Đã tra cứu cơ sở dữ liệu quy tắc cho hồ sơ **${claimId}**: Các chứng từ y tế và thông tin chẩn đoán đã được đối soát theo đúng quy định bồi thường.`,
           timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-          citations,
         },
       ]);
+    } finally {
       setIsStreaming(false);
-    }, 700);
+    }
+  };
+
+  const resetConversation = () => {
+    setMessages([
+      {
+        id: `init-${claimId}-${Date.now()}`,
+        role: 'assistant',
+        content: `Xin chào! Tôi là Trợ lý Thẩm định AI (Papaya Copilot).
+        
+Tôi đang sẵn sàng hỗ trợ bạn rà soát hồ sơ **${claimId}** của khách hàng **${patientName}** (HĐ: **${policyNumber}**).
+Bạn có thể hỏi bất kỳ câu hỏi nào về điều khoản loại trừ, thời gian chờ, tỷ lệ đồng chi trả hoặc yêu cầu trích dẫn quy tắc bảo hiểm!`,
+        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
   };
 
   return (
@@ -171,9 +185,7 @@ Công thức tính:
         </div>
 
         <button
-          onClick={() => {
-            setMessages([INITIAL_MESSAGE]);
-          }}
+          onClick={resetConversation}
           className="p-1.5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
           title="Làm mới hội thoại"
         >

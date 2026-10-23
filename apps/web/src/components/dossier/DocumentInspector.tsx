@@ -142,14 +142,18 @@ export function DocumentInspector({ claim }: DocumentInspectorProps) {
           <div className="border-b-2 border-slate-800 pb-3 mb-4 flex justify-between items-start">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                SỞ Y TẾ TP. HỒ CHÍ MINH
+                HỒ SƠ KHÁM CHỮA BỆNH CHÍNH THỨC
               </p>
               <h4 className="font-extrabold text-slate-900 text-sm">{claim.hospitalName}</h4>
-              <p className="text-[10px] text-slate-500">Mẫu chứng từ: 01/BV-BH2026</p>
+              <p className="text-[10px] text-slate-500">
+                Loại chứng từ: {currentDoc?.docType || 'HỒ SƠ Y TẾ'}
+              </p>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-mono text-slate-400 block">Số hồ sơ:</span>
-              <span className="font-mono font-bold text-xs text-slate-800">{claim.claimId}</span>
+              <span className="text-[10px] font-mono text-slate-400 block">Số chứng từ:</span>
+              <span className="font-mono font-bold text-xs text-slate-800">
+                {currentDoc?.docId || claim.claimId}
+              </span>
             </div>
           </div>
 

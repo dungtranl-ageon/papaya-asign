@@ -12,20 +12,24 @@ interface ManualOverrideModalProps {
     overrideReason: string;
     auditNote: string;
   }) => void;
-  claimId?: string;
-  originalAmount?: number;
+  claimId: string;
+  originalAmount: number;
 }
 
 export function ManualOverrideModal({
   isOpen,
   onClose,
   onConfirm,
-  claimId = 'CLM-2026-03891',
-  originalAmount = 13200000,
+  claimId,
+  originalAmount,
 }: ManualOverrideModalProps) {
   const [overriddenAmount, setOverriddenAmount] = useState<number>(originalAmount);
   const [overrideReason, setOverrideReason] = useState('MANAGEMENT_GOODWILL');
   const [auditNote, setAuditNote] = useState('');
+
+  React.useEffect(() => {
+    setOverriddenAmount(originalAmount);
+  }, [originalAmount]);
 
   if (!isOpen) return null;
 
@@ -35,11 +39,31 @@ export function ManualOverrideModal({
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!auditNote.trim()) {
       alert('Vui lòng nhập lý do giải trình kiểm toán bắt buộc khi thực hiện ghi đè số tiền!');
       return;
     }
+
+    if (claimId) {
+      try {
+        await fetch(`/api/claims/${claimId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'OVERRIDDEN',
+            totalApproved: overriddenAmount,
+            actorId: 'ASSESSOR',
+            actorRole: 'ASSESSOR',
+            overrideNotes: auditNote,
+            reason: `Chuyên viên ghi đè số tiền duyệt (${formatCurrency(originalAmount)} -> ${formatCurrency(overriddenAmount)}). Lý do: ${overrideReason}`,
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to update override status on server:', err);
+      }
+    }
+
     onConfirm({
       originalAmount,
       overriddenAmount,

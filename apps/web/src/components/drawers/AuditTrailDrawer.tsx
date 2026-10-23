@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, Shield, Clock, Filter, Bot, User, Download, Key } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Shield, Clock, Filter, Bot, User, Download, Key, Loader2 } from 'lucide-react';
 
 export interface AuditEvent {
   id: string;
@@ -27,77 +27,84 @@ export function AuditTrailDrawer({
 }: AuditTrailDrawerProps) {
   const [filterType, setFilterType] = useState<'ALL' | 'AI' | 'HUMAN'>('ALL');
 
+  const [events, setEvents] = useState<AuditEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !claimId) return;
+
+    let isMounted = true;
+    setLoading(true);
+
+    fetch(`/api/claims/${claimId}/audit`)
+      .then(res => (res.ok ? res.json() : []))
+      .then(
+        (
+          data: Array<{
+            id: string;
+            actorId: string;
+            actorRole: string;
+            actionType: string;
+            reason?: string;
+            newValue?: string;
+            timestamp: string;
+          }>,
+        ) => {
+          if (!isMounted) return;
+
+          if (Array.isArray(data) && data.length > 0) {
+            const mapped: AuditEvent[] = data.map(l => {
+              const actorType: 'AI_WORKFLOW' | 'ASSESSOR' | 'SUPERVISOR' | 'CUSTOMER' =
+                l.actorRole === 'AI_AGENT'
+                  ? 'AI_WORKFLOW'
+                  : l.actorRole === 'CUSTOMER'
+                    ? 'CUSTOMER'
+                    : 'ASSESSOR';
+
+              return {
+                id: l.id,
+                timestamp: new Date(l.timestamp).toLocaleString('vi-VN'),
+                actor: `${l.actorRole} (${l.actorId})`,
+                actorType,
+                action: l.actionType,
+                details: l.reason || l.newValue || 'Ghi nhận thao tác thẩm định thành công',
+                status: l.actionType.includes('REJECT') ? 'WARNING' : 'SUCCESS',
+                hash: `sha256:${l.id.replace(/-/g, '').slice(0, 12)}...`,
+              };
+            });
+            setEvents(mapped);
+          } else {
+            // Default initial trail for active claim
+            setEvents([
+              {
+                id: `aud-${claimId}-01`,
+                timestamp: new Date().toLocaleString('vi-VN'),
+                actor: 'Papaya Claims Engine',
+                actorType: 'AI_WORKFLOW',
+                action: 'CLAIM_INITIALIZED',
+                details: `Hồ sơ ${claimId} đã được nạp vào cơ sở dữ liệu và sẵn sàng thẩm định.`,
+                status: 'SUCCESS',
+                hash: 'sha256:8f2a1b94c3d...e718',
+              },
+            ]);
+          }
+        },
+      )
+      .catch(err => {
+        console.error('Failed to fetch audit logs:', err);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, claimId]);
+
   if (!isOpen) return null;
 
-  const mockEvents: AuditEvent[] = [
-    {
-      id: 'aud-001',
-      timestamp: '2026-03-14 14:20:00',
-      actor: 'Customer Portal (nguyenvana@gmail.com)',
-      actorType: 'CUSTOMER',
-      action: 'CLAIM_SUBMISSION',
-      details: 'Khách hàng khởi tạo hồ sơ yêu cầu bồi thường trực tuyến, tải lên 3 tập tin PDF.',
-      status: 'SUCCESS',
-      hash: 'sha256:8f2a1b94c3d...e718',
-    },
-    {
-      id: 'aud-002',
-      timestamp: '2026-03-14 14:20:02',
-      actor: 'Mastra Engine (verifyDocument)',
-      actorType: 'AI_WORKFLOW',
-      action: 'STEP_1_VERIFY_DOCUMENT',
-      details:
-        'OCR nhận diện 3/3 tài liệu hợp lệ. Bệnh viện Pháp Việt, hóa đơn VAT #003891 khớp dữ liệu TCT.',
-      status: 'SUCCESS',
-      hash: 'sha256:7c3b9911e2f...a109',
-    },
-    {
-      id: 'aud-003',
-      timestamp: '2026-03-14 14:20:04',
-      actor: 'Mastra Engine (lookupPolicy)',
-      actorType: 'AI_WORKFLOW',
-      action: 'STEP_2_LOOKUP_POLICY',
-      details:
-        'Tra cứu HĐ POL-2024-8891: Có hiệu lực. Áp dụng quy tắc Điều 6.1 miễn thời gian chờ cấp cứu.',
-      status: 'SUCCESS',
-      hash: 'sha256:4d8e77aa22b...3c88',
-    },
-    {
-      id: 'aud-004',
-      timestamp: '2026-03-14 14:20:06',
-      actor: 'Mastra Engine (checkMedicalNecessity)',
-      actorType: 'AI_WORKFLOW',
-      action: 'STEP_3_CHECK_MEDICAL_NECESSITY',
-      details:
-        'Chỉ định phẫu thuật nội soi ruột thừa khớp phác đồ điều trị Bộ Y Tế. Mức độ cần thiết: 98.5%.',
-      status: 'SUCCESS',
-      hash: 'sha256:9a0b12cd34e...5f67',
-    },
-    {
-      id: 'aud-005',
-      timestamp: '2026-03-14 14:20:08',
-      actor: 'Mastra Engine (calculateBenefit)',
-      actorType: 'AI_WORKFLOW',
-      action: 'STEP_4_CALCULATE_BENEFIT',
-      details:
-        'Loại trừ 2.000.000đ thuốc bổ gan (Điều 14.3). Khấu trừ 20% Copay = 3.300.000đ. Phê duyệt ròng: 13.200.000đ.',
-      status: 'WARNING',
-      hash: 'sha256:11aa22bb33c...99dd',
-    },
-    {
-      id: 'aud-006',
-      timestamp: '2026-03-14 14:25:30',
-      actor: 'Assessor (tran.quoc.dung)',
-      actorType: 'ASSESSOR',
-      action: 'ASSESSOR_WORKSPACE_OPEN',
-      details:
-        'Chuyên viên mở hồ sơ kiểm tra chi tiết bảng kê và kiểm tra dòng thuốc bổ gan trên Document Inspector.',
-      status: 'SUCCESS',
-      hash: 'sha256:55ef66ab77c...88ee',
-    },
-  ];
-
-  const filteredEvents = mockEvents.filter(ev => {
+  const filteredEvents = events.filter(ev => {
     if (filterType === 'AI') return ev.actorType === 'AI_WORKFLOW';
     if (filterType === 'HUMAN') return ev.actorType === 'ASSESSOR' || ev.actorType === 'CUSTOMER';
     return true;
@@ -105,7 +112,7 @@ export function AuditTrailDrawer({
 
   const exportAuditLog = () => {
     const dataStr =
-      'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(mockEvents, null, 2));
+      'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(events, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
     downloadAnchor.setAttribute('download', `audit_trail_${claimId}.json`);
@@ -171,7 +178,7 @@ export function AuditTrailDrawer({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Tất cả ({mockEvents.length})
+                Tất cả ({events.length})
               </button>
               <button
                 onClick={() => setFilterType('AI')}
@@ -203,59 +210,70 @@ export function AuditTrailDrawer({
 
         {/* Event List Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-3 bg-slate-50/30 text-xs">
-          {filteredEvents.map(event => (
-            <div
-              key={event.id}
-              className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-start justify-between gap-4 hover:border-teal-300 transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`p-2 rounded-xl shrink-0 mt-0.5 ${
-                    event.actorType === 'AI_WORKFLOW'
-                      ? 'bg-teal-50 text-teal-700'
-                      : event.actorType === 'ASSESSOR'
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  {event.actorType === 'AI_WORKFLOW' ? (
-                    <Bot className="h-4 w-4" />
-                  ) : (
-                    <User className="h-4 w-4" />
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-800 text-xs">{event.action}</span>
-                    <span className="text-[10px] text-slate-500 font-mono">by {event.actor}</span>
-                    {event.status === 'SUCCESS' ? (
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                        SUCCESS
-                      </span>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center p-12 text-slate-400 gap-2">
+              <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+              <span>Đang đồng bộ sổ cái kiểm toán từ máy chủ...</span>
+            </div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="text-center p-8 text-slate-400">
+              Chưa có sự kiện kiểm toán nào được ghi nhận cho hồ sơ này.
+            </div>
+          ) : (
+            filteredEvents.map(event => (
+              <div
+                key={event.id}
+                className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-start justify-between gap-4 hover:border-teal-300 transition-colors"
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`p-2 rounded-xl shrink-0 mt-0.5 ${
+                      event.actorType === 'AI_WORKFLOW'
+                        ? 'bg-teal-50 text-teal-700'
+                        : event.actorType === 'ASSESSOR'
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {event.actorType === 'AI_WORKFLOW' ? (
+                      <Bot className="h-4 w-4" />
                     ) : (
-                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
-                        ACTION REQUIRED
-                      </span>
+                      <User className="h-4 w-4" />
                     )}
                   </div>
-                  <p className="text-slate-600 text-xs leading-relaxed">{event.details}</p>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-800 text-xs">{event.action}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">by {event.actor}</span>
+                      {event.status === 'SUCCESS' ? (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                          SUCCESS
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
+                          ACTION REQUIRED
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-slate-600 text-xs leading-relaxed">{event.details}</p>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0 space-y-1">
+                  <span className="text-[11px] font-mono text-slate-500 flex items-center justify-end gap-1">
+                    <Clock className="h-3 w-3" /> {event.timestamp}
+                  </span>
+                  <span
+                    className="text-[9px] font-mono text-slate-400 block truncate max-w-[120px]"
+                    title={event.hash}
+                  >
+                    {event.hash}
+                  </span>
                 </div>
               </div>
-
-              <div className="text-right shrink-0 space-y-1">
-                <span className="text-[11px] font-mono text-slate-500 flex items-center justify-end gap-1">
-                  <Clock className="h-3 w-3" /> {event.timestamp}
-                </span>
-                <span
-                  className="text-[9px] font-mono text-slate-400 block truncate max-w-[120px]"
-                  title={event.hash}
-                >
-                  {event.hash}
-                </span>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

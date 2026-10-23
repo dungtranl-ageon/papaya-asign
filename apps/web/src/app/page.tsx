@@ -1,5 +1,5 @@
-import { WorkstationLayout } from '@/components/WorkstationLayout';
+import ClaimsQueuePage from './claims/page';
 
 export default function Home() {
-  return <WorkstationLayout />;
+  return <ClaimsQueuePage />;
 }

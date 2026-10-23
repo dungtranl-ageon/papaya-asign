@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   CheckCircle2,
@@ -34,19 +34,23 @@ export function ApproveClaimModal({
   isOpen,
   onClose,
   onConfirm,
-  claimId = 'CLM-2026-03891',
-  suggestedAmount = 13200000,
-  insuredName = 'Nguyễn Văn A',
+  claimId = '',
+  suggestedAmount = 0,
+  insuredName = '',
 }: ApproveClaimModalProps) {
   const [beneficiaryName, setBeneficiaryName] = useState(insuredName);
   const [bankAccount, setBankAccount] = useState('0071001234567');
-  const [bankName, setBankName] = useState('Vietcombank - CN Tân Bình, TP.HCM');
+  const [bankName, setBankName] = useState('Vietcombank - Chi nhánh TP.HCM');
   const [payoutSchedule, setPayoutSchedule] = useState('BATCH_1600');
   const [sendEmail, setSendEmail] = useState(true);
   const [sendSms, setSendSms] = useState(true);
   const [note, setNote] = useState(
-    'Hồ sơ hợp lệ, đủ 3/3 chứng từ, chi trả theo quyền lợi điều trị phẫu thuật cấp cứu.',
+    'Hồ sơ hợp lệ, đủ chứng từ theo quy định, phê duyệt chi trả theo quyền lợi hợp đồng.',
   );
+
+  useEffect(() => {
+    if (insuredName) setBeneficiaryName(insuredName);
+  }, [insuredName]);
 
   if (!isOpen) return null;
 
@@ -54,7 +58,25 @@ export function ApproveClaimModal({
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
+    if (claimId) {
+      try {
+        await fetch(`/api/claims/${claimId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'APPROVED',
+            totalApproved: suggestedAmount,
+            actorId: 'ASSESSOR',
+            actorRole: 'ASSESSOR',
+            reason: note,
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to update status on server:', err);
+      }
+    }
+
     onConfirm({
       approvedAmount: suggestedAmount,
       beneficiaryName,
@@ -108,9 +130,11 @@ export function ApproveClaimModal({
             </div>
             <div className="text-right">
               <span className="text-[10px] text-emerald-800 font-bold bg-emerald-100 px-2 py-0.5 rounded-full inline-block mb-1">
-                AI Khuyến nghị 100%
+                AI Khuyến nghị Phê duyệt
               </span>
-              <p className="text-[10px] text-slate-500">Đã trừ 20% Copay & TPCN</p>
+              <p className="text-[10px] text-slate-500">
+                Sau khi trừ chi phí ngoài danh mục & đồng chi trả
+              </p>
             </div>
           </div>
 

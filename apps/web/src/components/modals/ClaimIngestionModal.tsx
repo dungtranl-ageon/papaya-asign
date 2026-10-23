@@ -15,6 +15,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { ClaimStatus } from '@papaya/shared';
+import { CLAIM_PRESETS } from '../../fixtures/claim-presets';
 
 export interface IngestedClaimData {
   id: string;
@@ -45,185 +46,95 @@ export interface IngestedClaimData {
 interface ClaimIngestionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (claimData: IngestedClaimData) => void;
+  onSubmit: (data: IngestedClaimData) => void;
 }
 
 export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestionModalProps) {
+  const initialPreset = CLAIM_PRESETS.TC01;
+
   // Preset selector
   const [selectedPreset, setSelectedPreset] = useState<'TC01' | 'TC02' | 'TC03' | 'CUSTOM'>('TC01');
 
   // Form Fields
-  const [policyId, setPolicyId] = useState('POL-2024-8891');
-  const [insuredName, setInsuredName] = useState('Nguyễn Văn A');
-  const [nationalId, setNationalId] = useState('079090012345');
-  const [phone, setPhone] = useState('0908123456');
-  const [email, setEmail] = useState('nguyenvana@gmail.com');
+  const [policyId, setPolicyId] = useState(initialPreset.policyId);
+  const [insuredName, setInsuredName] = useState(initialPreset.insuredName);
+  const [nationalId, setNationalId] = useState(initialPreset.nationalId);
+  const [phone, setPhone] = useState(initialPreset.phone);
+  const [email, setEmail] = useState(initialPreset.email);
 
-  const [hospitalName, setHospitalName] = useState('Bệnh viện FV (Pháp Việt)');
+  const [hospitalName, setHospitalName] = useState(initialPreset.hospitalName);
   const [hospitalType] = useState('Tư nhân / Quốc tế');
-  const [admissionDate, setAdmissionDate] = useState('2026-03-10');
-  const [dischargeDate, setDischargeDate] = useState('2026-03-13');
-  const [icd10Code, setIcd10Code] = useState('K35.8');
-  const [icd10Description, setIcd10Description] = useState(
-    'Viêm ruột thừa cấp khác và không xác định',
-  );
+  const [admissionDate, setAdmissionDate] = useState(initialPreset.admissionDate);
+  const [dischargeDate, setDischargeDate] = useState(initialPreset.dischargeDate);
+  const [icd10Code, setIcd10Code] = useState(initialPreset.icd10Code);
+  const [icd10Description, setIcd10Description] = useState(initialPreset.icd10Description);
   const [treatmentType, setTreatmentType] = useState<'INPATIENT' | 'OUTPATIENT' | 'DENTAL'>(
-    'INPATIENT',
+    initialPreset.treatmentType,
   );
 
-  const [claimedAmount, setClaimedAmount] = useState<number>(18500000);
+  const [claimedAmount, setClaimedAmount] = useState<number>(initialPreset.claimedAmount);
 
   // Documents attached
-  const [documents, setDocuments] = useState<
-    Array<{
-      id: string;
-      docType: string;
-      fileName: string;
-      status: 'VALID' | 'INVALID' | 'PENDING';
-      note: string;
-    }>
-  >([
-    {
-      id: 'doc-1',
-      docType: 'Giấy ra viện (Bản gốc)',
-      fileName: 'giay_ra_vien_nguyen_van_a.pdf',
-      status: 'VALID',
-      note: 'Đầy đủ chữ ký BS & Mộc đỏ BV',
-    },
-    {
-      id: 'doc-2',
-      docType: 'Bảng kê viện phí mẫu 01/BV',
-      fileName: 'bang_ke_chi_phi_fv.pdf',
-      status: 'VALID',
-      note: 'Khớp 18.500.000 đ',
-    },
-    {
-      id: 'doc-3',
-      docType: 'Hóa đơn VAT điện tử',
-      fileName: 'hoa_don_vat_003891.pdf',
-      status: 'VALID',
-      note: 'Mã tra cứu hóa đơn hợp lệ trên TCT',
-    },
-  ]);
+  const [documents, setDocuments] = useState(initialPreset.documents);
 
   if (!isOpen) return null;
 
   const loadPreset = (preset: 'TC01' | 'TC02' | 'TC03') => {
     setSelectedPreset(preset);
-    if (preset === 'TC01') {
-      setPolicyId('POL-2024-8891');
-      setInsuredName('Nguyễn Văn A');
-      setNationalId('079090012345');
-      setPhone('0908123456');
-      setEmail('nguyenvana@gmail.com');
-      setHospitalName('Bệnh viện FV (Pháp Việt)');
-      setAdmissionDate('2026-03-10');
-      setDischargeDate('2026-03-13');
-      setIcd10Code('K35.8');
-      setIcd10Description('Viêm ruột thừa cấp khác và không xác định');
-      setTreatmentType('INPATIENT');
-      setClaimedAmount(18500000);
-      setDocuments([
-        {
-          id: 'doc-1',
-          docType: 'Giấy ra viện (Bản gốc)',
-          fileName: 'giay_ra_vien_nguyen_van_a.pdf',
-          status: 'VALID',
-          note: 'Đầy đủ chữ ký BS & Mộc đỏ BV',
-        },
-        {
-          id: 'doc-2',
-          docType: 'Bảng kê viện phí mẫu 01/BV',
-          fileName: 'bang_ke_chi_phi_fv.pdf',
-          status: 'VALID',
-          note: 'Khớp 18.500.000 đ',
-        },
-        {
-          id: 'doc-3',
-          docType: 'Hóa đơn VAT điện tử',
-          fileName: 'hoa_don_vat_003891.pdf',
-          status: 'VALID',
-          note: 'Mã tra cứu hóa đơn hợp lệ trên TCT',
-        },
-      ]);
-    } else if (preset === 'TC02') {
-      setPolicyId('POL-2026-1029');
-      setInsuredName('Trần Thị B');
-      setNationalId('079185009988');
-      setPhone('0912334455');
-      setEmail('tranthib@gmail.com');
-      setHospitalName('Bệnh viện Chợ Rẫy TP.HCM');
-      setAdmissionDate('2026-01-20');
-      setDischargeDate('2026-01-24');
-      setIcd10Code('K29.7');
-      setIcd10Description('Viêm dạ dày mạn tính không đặc hiệu');
-      setTreatmentType('INPATIENT');
-      setClaimedAmount(12000000);
-      setDocuments([
-        {
-          id: 'doc-1',
-          docType: 'Giấy ra viện (Bản gốc)',
-          fileName: 'giay_ra_vien_cho_ray_b.pdf',
-          status: 'VALID',
-          note: 'Điều trị nội trú 4 ngày',
-        },
-        {
-          id: 'doc-2',
-          docType: 'Bảng kê viện phí mẫu 01/BV',
-          fileName: 'bang_ke_vien_phi_cho_ray.pdf',
-          status: 'VALID',
-          note: 'Tổng chi phí 12.000.000 đ',
-        },
-        {
-          id: 'doc-3',
-          docType: 'Hóa đơn VAT điện tử',
-          fileName: 'hoa_don_dien_tu_cho_ray.pdf',
-          status: 'VALID',
-          note: 'Khớp mã tra cứu',
-        },
-      ]);
-    } else if (preset === 'TC03') {
-      setPolicyId('POL-2025-4421');
-      setInsuredName('Lê Văn C');
-      setNationalId('079080001122');
-      setPhone('0987654321');
-      setEmail('levanc@gmail.com');
-      setHospitalName('Bệnh viện Đa khoa Quốc tế Vinmec');
-      setAdmissionDate('2026-03-01');
-      setDischargeDate('2026-03-02');
-      setIcd10Code('S82.1');
-      setIcd10Description('Gãy đầu trên xương chày do tai nạn');
-      setTreatmentType('INPATIENT');
-      setClaimedAmount(25000000);
-      setDocuments([
-        {
-          id: 'doc-1',
-          docType: 'Giấy ra viện (Bản scan)',
-          fileName: 'giay_ra_vien_vinmec.pdf',
-          status: 'VALID',
-          note: 'Chữ ký bác sĩ đầy đủ',
-        },
-        {
-          id: 'doc-2',
-          docType: 'Bảng kê viện phí mẫu 01/BV',
-          fileName: 'bang_ke_vinmec_bi_mo.pdf',
-          status: 'INVALID',
-          note: 'Bản scan nhòe số tiền, không đọc được OCR',
-        },
-        {
-          id: 'doc-3',
-          docType: 'Hóa đơn VAT điện tử',
-          fileName: 'chua_nop_hoa_don_vat.pdf',
-          status: 'PENDING',
-          note: 'Khách hàng chưa nộp hóa đơn VAT gốc',
-        },
-      ]);
+    const p = CLAIM_PRESETS[preset];
+    if (p) {
+      setPolicyId(p.policyId);
+      setInsuredName(p.insuredName);
+      setNationalId(p.nationalId);
+      setPhone(p.phone);
+      setEmail(p.email);
+      setHospitalName(p.hospitalName);
+      setAdmissionDate(p.admissionDate);
+      setDischargeDate(p.dischargeDate);
+      setIcd10Code(p.icd10Code);
+      setIcd10Description(p.icd10Description);
+      setTreatmentType(p.treatmentType);
+      setClaimedAmount(p.claimedAmount);
+      setDocuments(p.documents);
     }
   };
 
-  const handleCreate = () => {
-    const newClaim = {
-      id: `CLM-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
+  const handleCreate = async () => {
+    const generatedId = `CLM-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    try {
+      await fetch('/api/claims', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          claimId: generatedId,
+          policyNumber: policyId,
+          patientName: insuredName,
+          nationalId,
+          hospitalName,
+          admissionDate: new Date(admissionDate).toISOString(),
+          dischargeDate: new Date(dischargeDate).toISOString(),
+          diagnosisIcd10: icd10Code,
+          diagnosisDescription: icd10Description,
+          totalRequested: claimedAmount,
+          documents: documents.map(d => ({
+            docType: d.docType.includes('Giấy')
+              ? 'HOSPITAL_DISCHARGE'
+              : d.docType.includes('Hóa đơn')
+                ? 'VAT_INVOICE'
+                : 'DETAILED_INVOICE',
+            fileName: d.fileName,
+            status: d.status,
+            notes: d.note,
+          })),
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to persist ingested claim to DB:', err);
+    }
+
+    const newClaim: IngestedClaimData = {
+      id: generatedId,
       policyId,
       insuredName,
       nationalId,
@@ -238,7 +149,7 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
       treatmentType,
       claimedAmount,
       documents,
-      status: 'ASSESSING' as ClaimStatus,
+      status: 'SUBMITTED',
       createdAt: new Date().toISOString(),
     };
     onSubmit(newClaim);
@@ -249,7 +160,7 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
     const newDoc = {
       id: `doc-${Date.now()}`,
       docType: 'Chứng từ bổ sung mới',
-      fileName: 'tai_lieu_dinh_kem_moi.pdf',
+      fileName: `tai_lieu_${Date.now()}.pdf`,
       status: 'VALID' as const,
       note: 'Vừa upload thành công',
     };
@@ -301,7 +212,7 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
                   : 'bg-white text-slate-700 border border-slate-200 hover:bg-teal-50 hover:text-teal-800'
               }`}
             >
-              TC-01: Ruột thừa cấp (Hợp lệ)
+              {CLAIM_PRESETS.TC01.label}
             </button>
 
             <button
@@ -313,7 +224,7 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
                   : 'bg-white text-slate-700 border border-slate-200 hover:bg-rose-50 hover:text-rose-800'
               }`}
             >
-              TC-02: Dạ dày (Thời gian chờ)
+              {CLAIM_PRESETS.TC02.label}
             </button>
 
             <button
@@ -325,7 +236,7 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
                   : 'bg-white text-slate-700 border border-slate-200 hover:bg-amber-50 hover:text-amber-800'
               }`}
             >
-              TC-03: Thiếu chứng từ (Cần bổ sung)
+              {CLAIM_PRESETS.TC03.label}
             </button>
           </div>
         </div>

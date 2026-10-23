@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   HelpCircle,
@@ -11,6 +11,10 @@ import {
   AlertCircle,
   Sparkles,
 } from 'lucide-react';
+import {
+  STANDARD_REQUEST_DOC_LIST,
+  DEFAULT_REQUEST_INFO_GUIDANCE,
+} from '../../constants/request-info-templates';
 
 interface RequestMoreInfoModalProps {
   isOpen: boolean;
@@ -23,41 +27,57 @@ interface RequestMoreInfoModalProps {
   }) => void;
   claimId?: string;
   insuredName?: string;
+  initialMissingDocs?: string[];
 }
 
 export function RequestMoreInfoModal({
   isOpen,
   onClose,
   onConfirm,
-  claimId = 'CLM-2026-05230',
-  insuredName = 'Lê Văn C',
+  claimId = 'CLM-2026-003',
+  insuredName = 'Tran Thi B',
+  initialMissingDocs,
 }: RequestMoreInfoModalProps) {
-  const [selectedDocs, setSelectedDocs] = useState<string[]>([
-    'Bảng kê chi phí khám chữa bệnh (Bản gốc hoặc scan rõ nét có dấu mộc tròn BV)',
-    'Hóa đơn điện tử có mã số tra cứu hóa đơn VAT hợp lệ',
-  ]);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [deadlineDays, setDeadlineDays] = useState(30);
   const [sendMagicLink, setSendMagicLink] = useState(true);
-  const [guidanceNote, setGuidanceNote] = useState(
-    'Kính đề nghị Quý khách chụp thẳng góc 90 độ, đảm bảo đầy đủ 4 góc tài liệu và không bị lóa sáng để hệ thống AI nhận diện tự động.',
-  );
+  const [guidanceNote, setGuidanceNote] = useState(DEFAULT_REQUEST_INFO_GUIDANCE);
+
+  useEffect(() => {
+    if (initialMissingDocs && initialMissingDocs.length > 0) {
+      setSelectedDocs(initialMissingDocs);
+    } else {
+      setSelectedDocs([STANDARD_REQUEST_DOC_LIST[0]!, STANDARD_REQUEST_DOC_LIST[1]!]);
+    }
+  }, [initialMissingDocs]);
 
   if (!isOpen) return null;
 
-  const standardDocList = [
-    'Giấy ra viện / Giấy chứng nhận phẫu thuật (Có chữ ký bác sĩ điều trị & mộc đỏ)',
-    'Bảng kê chi phí khám chữa bệnh (Bản gốc hoặc scan rõ nét có dấu mộc tròn BV)',
-    'Hóa đơn điện tử có mã số tra cứu hóa đơn VAT hợp lệ',
-    'Bản chụp rõ nét 2 mặt Căn cước công dân gắn chip để đối soát danh tính',
-    'Kết quả chẩn đoán hình ảnh (CT Scanner / MRI) hoặc giải phẫu bệnh học',
-    'Biên bản tai nạn giao thông / Tường trình tai nạn sinh hoạt (nếu có)',
-  ];
+  const standardDocList = STANDARD_REQUEST_DOC_LIST;
 
   const toggleDoc = (doc: string) => {
     setSelectedDocs(prev => (prev.includes(doc) ? prev.filter(d => d !== doc) : [...prev, doc]));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (claimId) {
+      try {
+        await fetch(`/api/claims/${claimId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'PENDING_MORE_INFO',
+            actorId: 'ASSESSOR',
+            actorRole: 'ASSESSOR',
+            missingDocuments: selectedDocs,
+            reason: `Yêu cầu bổ sung ${selectedDocs.length} loại chứng từ: ${guidanceNote}`,
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to update request info status on server:', err);
+      }
+    }
+
     onConfirm({
       requestedDocuments: selectedDocs,
       deadlineDays,

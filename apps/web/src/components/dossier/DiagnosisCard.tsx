@@ -6,11 +6,20 @@ import { Claim } from '@papaya/shared';
 
 interface DiagnosisCardProps {
   claim: Claim;
+  policyExclusions?: string[];
+  medicalNecessityScore?: number;
 }
 
-export function DiagnosisCard({ claim }: DiagnosisCardProps) {
-  // Check if diagnosis is flagged as cosmetic / excluded (like Z41)
-  const isExcludedDiagnosis = claim.diagnosisIcd10.startsWith('Z41');
+export function DiagnosisCard({
+  claim,
+  policyExclusions = [],
+  medicalNecessityScore,
+}: DiagnosisCardProps) {
+  // Check if diagnosis matches contract exclusions or cosmetic prefixes (Z41, etc.)
+  const isExcludedDiagnosis =
+    policyExclusions.includes(claim.diagnosisIcd10) ||
+    policyExclusions.some(exc => claim.diagnosisIcd10.startsWith(exc)) ||
+    claim.diagnosisIcd10.startsWith('Z41');
 
   return (
     <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs">
@@ -36,7 +45,9 @@ export function DiagnosisCard({ claim }: DiagnosisCardProps) {
             <span className="text-teal-700">{claim.diagnosisIcd10}</span>
           </div>
           <span className="text-[10px] text-slate-500 block mt-0.5 font-medium">
-            Độ tin cậy: 98.5%
+            {medicalNecessityScore
+              ? `Độ khớp phác đồ: ${medicalNecessityScore}%`
+              : 'Mã hóa lâm sàng hợp lệ'}
           </span>
         </div>
       </div>
@@ -70,15 +81,15 @@ export function DiagnosisCard({ claim }: DiagnosisCardProps) {
           <div className="flex items-center gap-1.5 text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200 w-full">
             <ShieldAlert className="h-4 w-4 text-rose-600 shrink-0" />
             <span className="font-medium text-[11px]">
-              Cảnh báo: Mã ICD-10 {claim.diagnosisIcd10} thuộc danh mục Phẫu thuật chỉnh hình / Thẩm
-              mỹ (Điểm loại trừ 8.2).
+              Cảnh báo: Mã bệnh {claim.diagnosisIcd10} nằm trong danh mục điểm loại trừ trách nhiệm
+              bảo hiểm của hợp đồng.
             </span>
           </div>
         ) : (
           <div className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 w-full">
             <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
             <span className="font-medium text-[11px]">
-              Chỉ định y khoa hợp lý theo Phác đồ Hướng dẫn Điều trị của Bộ Y Tế Việt Nam.
+              Chỉ định y khoa phù hợp theo Phác đồ Hướng dẫn Điều trị của Bộ Y Tế Việt Nam.
             </span>
           </div>
         )}

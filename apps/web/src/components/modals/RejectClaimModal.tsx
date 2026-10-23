@@ -1,7 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, AlertOctagon, FileWarning, ShieldAlert, BookOpen, AlertCircle } from 'lucide-react';
+import {
+  REJECTION_REASONS_CATALOG,
+  REJECTION_LEGAL_NOTICE,
+} from '../../constants/rejection-templates';
 
 interface RejectClaimModalProps {
   isOpen: boolean;
@@ -28,47 +32,44 @@ export function RejectClaimModal({
     'Điều 4.2 - Thời gian chờ đối với Bệnh thông thường',
   );
   const [allowAppeal, setAllowAppeal] = useState(true);
-  const [formalLetterContent, setFormalLetterContent] = useState(
-    `Kính gửi Quý khách hàng ${insuredName},
+  const [formalLetterContent, setFormalLetterContent] = useState('');
 
-Công ty Bảo hiểm xin chân thành cảm ơn Quý khách đã tin tưởng và tham gia bảo hiểm.
-
-Về yêu cầu giải quyết quyền lợi bảo hiểm mã hồ sơ ${claimId}, sau khi đối chiếu hồ sơ y tế với Quy tắc Bảo hiểm đã thỏa thuận, chúng tôi rất tiếc phải thông báo hồ sơ của Quý khách không thuộc phạm vi chi trả bảo hiểm vì lý do sau:
-- Sự kiện bảo hiểm phát sinh trong Thời gian chờ 30 ngày kể từ ngày hợp đồng có hiệu lực (Quy định tại Điều 4.2).
-
-Nếu Quý khách có thêm chứng từ y khoa làm rõ hoặc có thắc mắc, Quý khách có quyền gửi đơn khiếu nại trong vòng 30 ngày làm việc kể từ ngày nhận được thông báo này.
-
-Trân trọng kính thư!`,
-  );
+  useEffect(() => {
+    const initialConfig = REJECTION_REASONS_CATALOG[0]!;
+    setClauseReference(initialConfig.clauseReference);
+    setFormalLetterContent(initialConfig.generateLetter(insuredName, claimId));
+  }, [insuredName, claimId]);
 
   if (!isOpen) return null;
 
   const handleReasonChange = (reasonKey: string) => {
     setSelectedReason(reasonKey);
-    if (reasonKey === 'WAITING_PERIOD') {
-      setClauseReference('Điều 4.2 - Thời gian chờ đối với Bệnh thông thường (30 ngày)');
-      setFormalLetterContent(
-        `Kính gửi Quý khách hàng ${insuredName},\n\nVề yêu cầu bảo hiểm mã hồ sơ ${claimId}, sau khi xem xét hồ sơ y tế, chúng tôi rất tiếc thông báo hồ sơ không thuộc phạm vi chi trả do sự kiện điều trị phát sinh trong Thời gian chờ 30 ngày theo quy định tại Điều 4.2.\n\nQuý khách có quyền khiếu nại trong vòng 30 ngày kể từ ngày nhận thông báo này.`,
-      );
-    } else if (reasonKey === 'POLICY_EXCLUSION') {
-      setClauseReference('Điều 14.1 - Các điểm loại trừ trách nhiệm bảo hiểm chung');
-      setFormalLetterContent(
-        `Kính gửi Quý khách hàng ${insuredName},\n\nVề yêu cầu bảo hiểm mã hồ sơ ${claimId}, khoản chi phí điều trị yêu cầu thuộc trường hợp Điểm loại trừ trách nhiệm bảo hiểm theo quy định tại Điều 14.1 của Hợp đồng bảo hiểm.\n\nQuý khách có quyền khiếu nại trong vòng 30 ngày kể từ ngày nhận thông báo này.`,
-      );
-    } else if (reasonKey === 'FRAUD_SUSPICION') {
-      setClauseReference('Điều 18.3 - Tính trung thực tuyệt đối & Hành vi gian lận hồ sơ');
-      setFormalLetterContent(
-        `Kính gửi Quý khách hàng ${insuredName},\n\nVề yêu cầu bảo hiểm mã hồ sơ ${claimId}, qua quá trình giám định pháp y và đối chiếu dữ liệu hóa đơn, chứng từ cung cấp có dấu hiệu chỉnh sửa hoặc không trùng khớp với dữ liệu gốc của cơ sở y tế. Do đó hồ sơ bị từ chối theo Điều 18.3.`,
-      );
-    } else if (reasonKey === 'LIMIT_EXCEEDED') {
-      setClauseReference('Điều 8.4 - Hạn mức chi trả tối đa trong năm hợp đồng');
-      setFormalLetterContent(
-        `Kính gửi Quý khách hàng ${insuredName},\n\nVề yêu cầu bảo hiểm mã hồ sơ ${claimId}, hạn mức quyền lợi năm của Quý khách đã được chi trả tối đa (100.000.000 đ) trước đó, do đó không thể giải quyết thêm chi phí phát sinh.`,
-      );
+    const config = REJECTION_REASONS_CATALOG.find(r => r.id === reasonKey);
+    if (config) {
+      setClauseReference(config.clauseReference);
+      setFormalLetterContent(config.generateLetter(insuredName, claimId));
     }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
+    if (claimId) {
+      try {
+        await fetch(`/api/claims/${claimId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'REJECTED',
+            actorId: 'ASSESSOR',
+            actorRole: 'ASSESSOR',
+            reason: `${clauseReference} - ${selectedReason}`,
+            rejectionReason: selectedReason,
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to update rejection status on server:', err);
+      }
+    }
+
     onConfirm({
       primaryReason: selectedReason,
       clauseReference,
@@ -109,9 +110,7 @@ Trân trọng kính thư!`,
           <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5">
             <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-[11px] text-amber-900 leading-relaxed">
-              <strong>Lưu ý pháp lý:</strong> Quyết định từ chối bồi thường là văn bản có giá trị
-              pháp lý ràng buộc. Khách hàng có quyền khiếu nại hoặc khởi kiện trong vòng 30 ngày làm
-              việc.
+              <strong>Lưu ý pháp lý:</strong> {REJECTION_LEGAL_NOTICE}
             </div>
           </div>
 
@@ -123,28 +122,7 @@ Trân trọng kính thư!`,
             </label>
 
             <div className="grid grid-cols-1 gap-2">
-              {[
-                {
-                  id: 'WAITING_PERIOD',
-                  title: 'Phát sinh trong Thời gian chờ (Waiting Period)',
-                  desc: 'Hồ sơ khám/điều trị trong 30 ngày đầu của hợp đồng (TC-02)',
-                },
-                {
-                  id: 'POLICY_EXCLUSION',
-                  title: 'Thuộc danh mục Điều khoản Loại trừ Hợp đồng',
-                  desc: 'Thực phẩm chức năng, phẫu thuật thẩm mỹ, bệnh bẩm sinh...',
-                },
-                {
-                  id: 'FRAUD_SUSPICION',
-                  title: 'Nghi vấn gian lận chứng từ y tế / Không trung thực',
-                  desc: 'Chứng từ có dấu hiệu tẩy xóa, trùng hóa đơn với bảo hiểm khác',
-                },
-                {
-                  id: 'LIMIT_EXCEEDED',
-                  title: 'Vượt quá hạn mức bồi thường tối đa trong năm',
-                  desc: 'Hạn mức bảo hiểm năm đã chạm ngưỡng 100%',
-                },
-              ].map(r => (
+              {REJECTION_REASONS_CATALOG.map(r => (
                 <label
                   key={r.id}
                   className={`p-3 rounded-xl border cursor-pointer flex items-start gap-3 transition-all ${

@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Param, Sse, Body } from '@nestjs/common';
-import { ClaimsService } from './claims.service';
+import { Controller, Get, Post, Patch, Param, Sse, Body } from '@nestjs/common';
+import { ClaimsService, CreateClaimDto, UpdateClaimStatusDto } from './claims.service';
 import { Claim, AssessmentReport } from '@papaya/shared';
+import { AuditLogItem } from '../audit/audit.service';
 import { Observable } from 'rxjs';
 import { SseEventPayload } from '../mastra/mastra.service';
 
@@ -16,6 +17,29 @@ export class ClaimsController {
   @Get(':id')
   async getClaim(@Param('id') id: string): Promise<Claim> {
     return this.claimsService.getClaimById(id);
+  }
+
+  @Post()
+  async createClaim(@Body() body: CreateClaimDto): Promise<Claim> {
+    return this.claimsService.createClaim(body);
+  }
+
+  @Patch(':id/status')
+  async updateClaimStatus(
+    @Param('id') id: string,
+    @Body() body: UpdateClaimStatusDto,
+  ): Promise<Claim> {
+    return this.claimsService.updateClaimStatus(id, body);
+  }
+
+  @Get(':id/audit')
+  async getClaimAudit(@Param('id') id: string): Promise<AuditLogItem[]> {
+    return this.claimsService.getClaimAudit(id);
+  }
+
+  @Get(':id/assessment')
+  async getLatestAssessment(@Param('id') id: string): Promise<AssessmentReport | null> {
+    return this.claimsService.getLatestAssessment(id);
   }
 
   @Post(':id/assess')

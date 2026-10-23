@@ -10,42 +10,43 @@ interface ToolExecutionTimelineProps {
 }
 
 export function ToolExecutionTimeline({ steps, isAssessing }: ToolExecutionTimelineProps) {
-  const defaultSteps: AssessmentStepResult[] = [
+  // If steps exist from live Mastra execution, use them. Otherwise render pipeline in pending state.
+  const pipelineTemplate: AssessmentStepResult[] = [
     {
       step: 'VERIFY_DOCUMENT',
-      status: 'PASSED',
-      score: 100,
-      message: '3/3 chứng từ hợp lệ',
-      details: { summary: 'Chứng từ hợp lệ' },
-      executedAt: new Date().toISOString(),
+      status: isAssessing ? 'PASSED' : 'ACTION_REQUIRED',
+      score: undefined,
+      message: isAssessing ? 'Đang xác thực chứng từ...' : 'Chờ thẩm định OCR & tính toàn vẹn',
+      details: {},
+      executedAt: '',
     },
     {
       step: 'LOOKUP_POLICY',
-      status: 'PASSED',
-      score: 100,
-      message: 'HĐ Hiệu lực, miễn chờ cấp cứu',
-      details: { summary: 'HĐ Hiệu lực' },
-      executedAt: new Date().toISOString(),
+      status: 'ACTION_REQUIRED',
+      score: undefined,
+      message: 'Chờ tra cứu hiệu lực & thời gian chờ',
+      details: {},
+      executedAt: '',
     },
     {
       step: 'CHECK_MEDICAL_NECESSITY',
-      status: 'PASSED',
-      score: 98.5,
-      message: 'Phù hợp phác đồ Bộ Y Tế',
-      details: { summary: 'Chỉ định y khoa chuẩn' },
-      executedAt: new Date().toISOString(),
+      status: 'ACTION_REQUIRED',
+      score: undefined,
+      message: 'Chờ đối soát phác đồ Bộ Y Tế',
+      details: {},
+      executedAt: '',
     },
     {
       step: 'CALCULATE_BENEFIT',
-      status: 'PASSED',
-      score: 100,
-      message: 'Chiết tính 13.200.000 đ',
-      details: { summary: 'Hoàn tất chiết tính' },
-      executedAt: new Date().toISOString(),
+      status: 'ACTION_REQUIRED',
+      score: undefined,
+      message: 'Chờ chiết tính khấu trừ & đồng chi trả',
+      details: {},
+      executedAt: '',
     },
   ];
 
-  const currentSteps = steps && steps.length > 0 ? steps : defaultSteps;
+  const currentSteps = steps && steps.length > 0 ? steps : pipelineTemplate;
 
   const getStepLabel = (step: string) => {
     switch (step) {

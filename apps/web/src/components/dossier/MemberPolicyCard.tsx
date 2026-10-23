@@ -1,19 +1,24 @@
 'use client';
 
 import React from 'react';
-import { User, CheckCircle2 } from 'lucide-react';
-import { Claim } from '@papaya/shared';
+import { User, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { Claim, Policy } from '@papaya/shared';
 
 interface MemberPolicyCardProps {
   claim: Claim;
+  policy?: Policy | null;
 }
 
-export function MemberPolicyCard({ claim }: MemberPolicyCardProps) {
-  // Mock annual limit calculations based on policy
-  const annualLimit = 500000000; // 500M VND
-  const usedAmount = 75000000; // 75M VND previously used
-  const remainingLimit = annualLimit - usedAmount - claim.totalRequested;
-  const usagePercentage = Math.round(((usedAmount + claim.totalRequested) / annualLimit) * 100);
+export function MemberPolicyCard({ claim, policy }: MemberPolicyCardProps) {
+  const annualLimit = policy?.annualTotalLimit || 500000000;
+  const usedAmount = policy?.annualUsedAmount || 0;
+  const remainingLimit = Math.max(0, annualLimit - usedAmount - claim.totalRequested);
+  const usagePercentage = Math.min(
+    100,
+    Math.round(((usedAmount + claim.totalRequested) / annualLimit) * 100),
+  );
+
+  const isPolicyActive = policy ? policy.status === 'ACTIVE' : true;
 
   return (
     <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs">
@@ -29,10 +34,22 @@ export function MemberPolicyCard({ claim }: MemberPolicyCardProps) {
             <h3 className="font-bold text-slate-900 text-sm">{claim.patientName}</h3>
           </div>
         </div>
-        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          Hợp đồng Hiệu lực
-        </span>
+        {isPolicyActive ? (
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Hợp đồng Hiệu lực
+          </span>
+        ) : policy?.status === 'LAPSED' ? (
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            Hết hiệu lực
+          </span>
+        ) : (
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1">
+            <XCircle className="h-3.5 w-3.5" />
+            Chấm dứt hiệu lực
+          </span>
+        )}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mb-3.5">
@@ -45,35 +62,37 @@ export function MemberPolicyCard({ claim }: MemberPolicyCardProps) {
           <span className="font-semibold text-slate-800 font-mono">{claim.nationalId}</span>
         </div>
         <div>
-          <span className="text-slate-500 block text-[11px]">Gói quyền lợi:</span>
-          <span className="font-semibold text-teal-700">Healthcare Gold Plus</span>
+          <span className="text-slate-500 block text-[11px]">Chương trình:</span>
+          <span className="font-semibold text-teal-700">
+            {policy?.planName || 'Chăm sóc Sức khỏe'}
+          </span>
         </div>
         <div>
-          <span className="text-slate-500 block text-[11px]">Thời gian chờ:</span>
-          <span className="font-semibold text-emerald-600">Đã qua 365 ngày (Đạt)</span>
+          <span className="text-slate-500 block text-[11px]">Hạn mức Năm:</span>
+          <span className="font-semibold text-slate-900">
+            {annualLimit.toLocaleString('vi-VN')} đ
+          </span>
         </div>
       </div>
 
-      {/* Annual Limit Progress Bar */}
-      <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-        <div className="flex justify-between items-center text-xs mb-1.5">
-          <span className="text-slate-600 font-medium">Hạn mức năm còn lại:</span>
-          <span className="font-bold text-teal-800">
-            {remainingLimit.toLocaleString()} VND / {annualLimit.toLocaleString()} VND
+      {/* Annual Usage Progress Bar */}
+      <div className="space-y-1.5 pt-1 border-t border-slate-100">
+        <div className="flex justify-between items-center text-[11px]">
+          <span className="text-slate-500">
+            Đã sử dụng lũy kế:{' '}
+            <strong className="text-slate-800">{usedAmount.toLocaleString('vi-VN')} đ</strong>
+          </span>
+          <span className="font-semibold text-teal-700">
+            Còn lại: {remainingLimit.toLocaleString('vi-VN')} đ ({100 - usagePercentage}%)
           </span>
         </div>
-        <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
           <div
-            className="h-full bg-teal-600 rounded-full transition-all duration-500"
-            style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+            className={`h-full transition-all duration-300 rounded-full ${
+              usagePercentage > 85 ? 'bg-amber-500' : 'bg-teal-600'
+            }`}
+            style={{ width: `${usagePercentage}%` }}
           />
-        </div>
-        <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-          <span>
-            Đã sử dụng: {(usedAmount + claim.totalRequested).toLocaleString()} VND (
-            {usagePercentage}%)
-          </span>
-          <span>Dư khả dụng: {remainingLimit.toLocaleString()} VND</span>
         </div>
       </div>
     </div>

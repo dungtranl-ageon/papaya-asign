@@ -33,26 +33,17 @@ export function BenefitCalculationCard({
   onOpenManualOverride,
   onOpenPolicyBrowser,
 }: BenefitCalculationCardProps) {
-  // Default fallback calculation matching TC-01
-  const defaultCalc: BenefitCalculationData = {
-    totalClaimedAmount: 18500000,
-    eligibleAmount: 16500000,
+  const data: BenefitCalculationData = calculation || {
+    totalClaimedAmount: 0,
+    eligibleAmount: 0,
     deductibleApplied: 0,
-    copayPercentage: 20,
-    copayAmount: 3300000,
-    ineligibleItems: [
-      {
-        description: 'Thực phẩm chức năng tăng cường men gan Hepa-Care',
-        amount: 2000000,
-        reason: 'Chi phí ngoài danh mục y tế quy định tại Quy tắc Điều 14.3',
-      },
-    ],
-    finalPayableAmount: 13200000,
-    annualLimitRemainingBefore: 80000000,
-    annualLimitRemainingAfter: 66800000,
+    copayPercentage: 0,
+    copayAmount: 0,
+    ineligibleItems: [],
+    finalPayableAmount: 0,
+    annualLimitRemainingBefore: 0,
+    annualLimitRemainingAfter: 0,
   };
-
-  const data = calculation || defaultCalc;
 
   // Assessor interactive copay override simulator
   const [interactiveCopay, setInteractiveCopay] = useState<number>(data.copayPercentage);

@@ -3,19 +3,38 @@ import { ClaimsService } from './claims.service';
 import { PoliciesService } from '../policies/policies.service';
 import { MastraService } from '../mastra/mastra.service';
 import { AuditService } from '../audit/audit.service';
-
+import { PrismaService } from '../prisma/prisma.service';
 import { PolicyRagService } from '../mastra/rag/policy-rag.service';
 import { AssessorCopilotAgent } from '../mastra/agents/assessor.agent';
 
 describe('ClaimsService Unit Tests', () => {
   it('instantiates ClaimsService and reads fixtures successfully', async () => {
-    const policiesService = new PoliciesService();
+    const mockPrisma = {
+      claim: {
+        findMany: async () => [],
+        findUnique: async () => null,
+      },
+      policy: {
+        findMany: async () => [],
+        findUnique: async () => null,
+      },
+      auditLog: {
+        create: async () => ({}),
+        findMany: async () => [],
+      },
+      assessment: {
+        findFirst: async () => null,
+        upsert: async () => ({}),
+      },
+    } as unknown as PrismaService;
+
+    const policiesService = new PoliciesService(mockPrisma);
     const ragService = new PolicyRagService();
     const copilotAgent = new AssessorCopilotAgent(ragService);
     const mastraService = new MastraService(copilotAgent);
-    const auditService = new AuditService();
+    const auditService = new AuditService(mockPrisma);
 
-    const service = new ClaimsService(policiesService, mastraService, auditService);
+    const service = new ClaimsService(mockPrisma, policiesService, mastraService, auditService);
     const claims = await service.listClaims();
 
     expect(claims.length).toBeGreaterThanOrEqual(1);

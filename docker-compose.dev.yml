@@ -1,0 +1,124 @@
+# ==============================================================================
+# PAPAYA CLAIMS ASSESSMENT COPILOT - DEVELOPMENT DOCKER COMPOSE
+# ==============================================================================
+# Usage:
+#   1. Default Lightweight Dev (SQLite, Zero Config):
+#      docker compose -f docker-compose.dev.yml up
+#
+#   2. Dev with PostgreSQL:
+#      docker compose -f docker-compose.dev.yml --profile postgres up
+#
+#   3. Dev with Local Ollama AI:
+#      docker compose -f docker-compose.dev.yml --profile ai up
+#
+#   4. Dev with Full Stack (PostgreSQL + Ollama AI):
+#      docker compose -f docker-compose.dev.yml --profile postgres --profile ai up
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # Next.js 15 Assessor Workstation (Frontend - Hot Reloading)
+  # ----------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
+    container_name: papaya_web_dev
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      WATCHPACK_POLLING: 'true'
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - papaya_network_dev
+
+  # ----------------------------------------------------------------------------
+  # NestJS 10 + Mastra Engine (Backend API - Watch Mode)
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile.dev
+    container_name: papaya_api_dev
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      CORS_ORIGIN: http://localhost:3000
+      # Default: SQLite inside container. When using postgres profile, set DATABASE_URL accordingly.
+      DATABASE_URL: ${DATABASE_URL:-file:/app/data/papaya_claims.db}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://localhost:11434/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-ollama}
+      MODEL_NAME: ${MODEL_NAME:-llama3.3}
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+      - /app/apps/api/dist
+      - ./data:/app/data
+    networks:
+      - papaya_network_dev
+
+  # ----------------------------------------------------------------------------
+  # PostgreSQL (Opt-in via --profile postgres)
+  # Avoids zombie container and port collision when running in SQLite mode.
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: papaya_postgres_dev
+    profiles: ['postgres']
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: papaya
+      POSTGRES_PASSWORD: papaya_secret
+      POSTGRES_DB: papaya_claims
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./data/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U papaya -d papaya_claims']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - papaya_network_dev
+
+  # ----------------------------------------------------------------------------
+  # Local Ollama AI Engine (Opt-in via --profile ai)
+  # ----------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: papaya_ollama_dev
+    profiles: ['ai']
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama_models_dev:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - papaya_network_dev
+
+networks:
+  papaya_network_dev:
+    driver: bridge
+
+volumes:
+  postgres_data_dev:
+    driver: local
+  ollama_models_dev:
+    driver: local

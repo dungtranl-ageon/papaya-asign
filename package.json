@@ -15,6 +15,9 @@
     "db:generate": "pnpm --filter @papaya/api db:generate",
     "db:push": "pnpm --filter @papaya/api db:push",
     "db:seed": "pnpm --filter @papaya/api db:seed",
+    "db:provider:sqlite": "npx tsx scripts/switch-db-provider.ts sqlite",
+    "db:provider:postgres": "npx tsx scripts/switch-db-provider.ts postgres",
+    "db:provider:auto": "npx tsx scripts/switch-db-provider.ts auto",
     "prepare": "git config core.hooksPath .githooks || true"
   },
   "devDependencies": {

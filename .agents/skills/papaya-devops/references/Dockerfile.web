@@ -1,0 +1,45 @@
+# syntax=docker/dockerfile:1
+# ==============================================================================
+# Production Multi-Stage Dockerfile for Next.js Web (apps/web)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Stage 1: Base
+# ------------------------------------------------------------------------------
+FROM node:22-alpine AS base
+RUN corepack enable pnpm
+WORKDIR /app
+
+# ------------------------------------------------------------------------------
+# Stage 2: Dependencies & Build
+# ------------------------------------------------------------------------------
+FROM base AS builder
+COPY pnpm-workspace.yaml package.json turbo.json tsconfig.base.json ./
+COPY packages/ packages/
+COPY apps/web/ apps/web/
+
+RUN pnpm install --frozen-lockfile=false
+RUN pnpm --filter @papaya/shared build
+RUN pnpm --filter @papaya/web build
+
+# ------------------------------------------------------------------------------
+# Stage 3: Minimal Production Runner
+# ------------------------------------------------------------------------------
+FROM node:22-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+
+USER node
+
+COPY --chown=node:node --from=builder /app/apps/web/public ./apps/web/public
+COPY --chown=node:node --from=builder /app/apps/web/.next ./apps/web/.next
+COPY --chown=node:node --from=builder /app/node_modules ./node_modules
+COPY --chown=node:node --from=builder /app/apps/web/package.json ./apps/web/package.json
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+
+CMD ["node_modules/.bin/next", "start", "apps/web", "-p", "3000"]

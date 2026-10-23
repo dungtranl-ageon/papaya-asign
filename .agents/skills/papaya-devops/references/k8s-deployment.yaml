@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: papaya-claims
+---
+# ------------------------------------------------------------------------------
+# ConfigMap for Environment Configuration
+# ------------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: papaya-config
+  namespace: papaya-claims
+data:
+  NODE_ENV: "production"
+  PORT: "3001"
+  WEB_PORT: "3000"
+  NEXT_PUBLIC_API_URL: "https://api.claims.papaya.internal"
+---
+# ------------------------------------------------------------------------------
+# NestJS API Deployment & Service
+# ------------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: papaya-api
+  namespace: papaya-claims
+  labels:
+    app: papaya-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: papaya-api
+  template:
+    metadata:
+      labels:
+        app: papaya-api
+    spec:
+      containers:
+        - name: api
+          image: papaya-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3001
+          envFrom:
+            - configMapRef:
+                name: papaya-config
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /claims
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /claims
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: papaya-api-service
+  namespace: papaya-claims
+spec:
+  type: ClusterIP
+  selector:
+    app: papaya-api
+  ports:
+    - port: 3001
+      targetPort: 3001
+---
+# ------------------------------------------------------------------------------
+# Next.js Web Workstation Deployment & Service
+# ------------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: papaya-web
+  namespace: papaya-claims
+  labels:
+    app: papaya-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: papaya-web
+  template:
+    metadata:
+      labels:
+        app: papaya-web
+    spec:
+      containers:
+        - name: web
+          image: papaya-web:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: papaya-config
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: papaya-web-service
+  namespace: papaya-claims
+spec:
+  type: LoadBalancer
+  selector:
+    app: papaya-web
+  ports:
+    - port: 80
+      targetPort: 3000

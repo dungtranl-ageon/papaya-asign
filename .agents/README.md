@@ -22,7 +22,7 @@ Thư mục `.agents/` này chứa toàn bộ cấu hình **chuẩn hóa cho Goog
 │   ├── papaya-mastra-engine/SKILL.md           # Điều phối luồng Hybrid Mastra Workflow & Agent trong NestJS
 │   ├── papaya-web-copilot/SKILL.md             # Next.js 15+ Dual-Pane Workstation & Generative UI
 │   ├── papaya-data-persistence/SKILL.md        # Quản lý Prisma ORM, migrations & nạp 3 test cases
-│   └── papaya-docker-services/SKILL.md         # Vận hành cụm microservices Docker Compose
+│   └── papaya-devops/SKILL.md                  # DevOps & DevSecOps, CI/CD, Containerization, K8s, IaaS/PaaS
 │
 ├── mcp_config.json                             # Cấu hình Model Context Protocol (MCP) cấp dự án
 └── README.md                                   # Hướng dẫn này

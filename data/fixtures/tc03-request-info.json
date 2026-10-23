@@ -1,0 +1,47 @@
+{
+  "claimId": "CLM-2026-003",
+  "policyNumber": "POL-SILVER-11223",
+  "patientName": "Tran Thi B",
+  "nationalId": "079198054321",
+  "hospitalName": "Cho Ray Hospital",
+  "admissionDate": "2026-02-15T10:00:00Z",
+  "dischargeDate": "2026-02-18T12:00:00Z",
+  "diagnosisIcd10": "J20",
+  "diagnosisDescription": "Acute bronchitis due to unspecified organism",
+  "status": "SUBMITTED",
+  "totalRequested": 12000000,
+  "items": [
+    {
+      "itemId": "ITM-007",
+      "description": "Standard Inpatient Care (Nằm viện điều trị viêm phế quản cấp)",
+      "category": "INPATIENT",
+      "amountRequested": 7500000
+    },
+    {
+      "itemId": "ITM-008",
+      "description": "IV Antibiotics & Nebulization (Kháng sinh tiêm truyền và khí dung)",
+      "category": "MEDICATION",
+      "amountRequested": 4500000
+    }
+  ],
+  "documents": [
+    {
+      "docId": "DOC-008",
+      "docType": "HOSPITAL_DISCHARGE",
+      "fileName": "giay_ra_vien_cho_ray.pdf",
+      "uploadedAt": "2026-02-19T08:30:00Z",
+      "status": "VALID",
+      "notes": "Valid discharge certificate"
+    },
+    {
+      "docId": "DOC-009",
+      "docType": "DETAILED_INVOICE",
+      "fileName": "bang_ke_mo_nhoe.pdf",
+      "uploadedAt": "2026-02-19T08:30:00Z",
+      "status": "INVALID",
+      "notes": "Scan quality is blurred, unable to read invoice numbers and hospital stamp"
+    }
+  ],
+  "createdAt": "2026-02-19T09:00:00Z",
+  "updatedAt": "2026-02-19T09:00:00Z"
+}

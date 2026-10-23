@@ -1,0 +1,104 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ------------------------------------------------------------------------------
+// Insurance Policy
+// ------------------------------------------------------------------------------
+model Policy {
+  id                String   @id @default(uuid())
+  policyNumber      String   @unique
+  insuredName       String
+  nationalId        String
+  planName          String
+  status            String   @default("ACTIVE") // ACTIVE, LAPSED, TERMINATED
+  effectiveDate     DateTime
+  expiryDate        DateTime
+  annualTotalLimit  Float
+  annualUsedAmount  Float    @default(0)
+  exclusionsJson    String   @default("[]")     // JSON array of excluded ICD codes/procedures
+  benefitsJson      String   @default("[]")     // JSON array of BenefitRule objects
+  waitingPeriodsJson String  @default("{}")     // JSON map of waiting periods
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  claims            Claim[]
+
+  @@map("policies")
+}
+
+// ------------------------------------------------------------------------------
+// Insurance Claim Dossier
+// ------------------------------------------------------------------------------
+model Claim {
+  id                   String        @id @default(uuid())
+  claimId              String        @unique
+  policyNumber         String
+  patientName          String
+  nationalId           String
+  hospitalName         String
+  admissionDate        DateTime
+  dischargeDate        DateTime
+  diagnosisIcd10       String
+  diagnosisDescription String
+  status               String        @default("SUBMITTED") // SUBMITTED, ASSESSING, PENDING_MORE_INFO, APPROVED, REJECTED, OVERRIDDEN
+  totalRequested       Float
+  totalApproved        Float?
+  itemsJson            String        @default("[]")        // JSON array of ClaimItem objects
+  documentsJson        String        @default("[]")        // JSON array of ClaimDocument objects
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  policy               Policy        @relation(fields: [policyNumber], references: [policyNumber])
+  assessments          Assessment[]
+  auditLogs            AuditLog[]
+
+  @@map("claims")
+}
+
+// ------------------------------------------------------------------------------
+// Assessment Report & Workflow Execution
+// ------------------------------------------------------------------------------
+model Assessment {
+  id                   String   @id @default(uuid())
+  assessmentId         String   @unique
+  claimId              String
+  finalRecommendation  String   // APPROVE, REJECT, REQUEST_MORE_INFO, MANUAL_ESCALATION
+  confidenceScore      Float    // 0 - 100
+  totalRequested       Float
+  totalPayable         Float
+  totalDeductions      Float
+  executiveSummary     String
+  stepsJson            String   // JSON array of AssessmentStepResult objects
+  breakdownJson        String   // JSON array of BenefitCalculationItem objects
+  missingDocumentsJson String   @default("[]")
+  assessedAt           DateTime @default(now())
+
+  claim                Claim    @relation(fields: [claimId], references: [claimId])
+
+  @@map("assessments")
+}
+
+// ------------------------------------------------------------------------------
+// Audit Trail & Human-in-the-Loop Override Log
+// ------------------------------------------------------------------------------
+model AuditLog {
+  id         String   @id @default(uuid())
+  claimId    String
+  actorId    String   // Assessor ID or 'SYSTEM_MASTRA_WORKFLOW'
+  actorRole  String   // ASSESSOR, SUPERVISOR, AI_AGENT
+  actionType String   // ASSESSMENT_RUN, OVERRIDE_DECISION, REQUEST_INFO, APPROVE_PAYMENT
+  oldValue   String?  // JSON
+  newValue   String?  // JSON
+  reason     String?
+  timestamp  DateTime @default(now())
+
+  claim      Claim    @relation(fields: [claimId], references: [claimId])
+
+  @@map("audit_logs")
+}

@@ -1,0 +1,48 @@
+{
+  "policyNumber": "POL-GOLD-99882",
+  "insuredName": "Nguyen Van A",
+  "nationalId": "001099012345",
+  "planName": "Healthcare Gold",
+  "status": "ACTIVE",
+  "effectiveDate": "2026-01-01T00:00:00Z",
+  "expiryDate": "2026-12-31T23:59:59Z",
+  "annualTotalLimit": 500000000,
+  "annualUsedAmount": 15000000,
+  "waitingPeriods": {
+    "PRE_EXISTING": 365,
+    "MATERNITY": 270,
+    "SPECIAL_DISEASE": 180
+  },
+  "exclusions": [
+    "K21",
+    "Z41.1",
+    "F32"
+  ],
+  "benefits": [
+    {
+      "category": "INPATIENT",
+      "maxLimitPerClaim": 60000000,
+      "maxLimitPerYear": 200000000,
+      "copayRate": 0.1,
+      "subLimitPerDay": 3000000
+    },
+    {
+      "category": "SURGERY",
+      "maxLimitPerClaim": 50000000,
+      "maxLimitPerYear": 150000000,
+      "copayRate": 0.2
+    },
+    {
+      "category": "MEDICATION",
+      "maxLimitPerClaim": 15000000,
+      "maxLimitPerYear": 50000000,
+      "copayRate": 0.1
+    },
+    {
+      "category": "LABORATORY",
+      "maxLimitPerClaim": 10000000,
+      "maxLimitPerYear": 30000000,
+      "copayRate": 0.1
+    }
+  ]
+}

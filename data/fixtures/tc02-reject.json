@@ -1,0 +1,53 @@
+{
+  "claimId": "CLM-2026-002",
+  "policyNumber": "POL-GOLD-99882",
+  "patientName": "Nguyen Van A",
+  "nationalId": "001099012345",
+  "hospitalName": "Tam Duc Heart Hospital",
+  "admissionDate": "2026-03-01T09:00:00Z",
+  "dischargeDate": "2026-03-01T16:00:00Z",
+  "diagnosisIcd10": "K21",
+  "diagnosisDescription": "Gastro-esophageal reflux disease (GERD) with esophagitis",
+  "status": "SUBMITTED",
+  "totalRequested": 8500000,
+  "items": [
+    {
+      "itemId": "ITM-005",
+      "description": "Gastroscopy and biopsy (Nội soi thực quản dạ dày sinh thiết)",
+      "category": "OUTPATIENT",
+      "amountRequested": 4500000
+    },
+    {
+      "itemId": "ITM-006",
+      "description": "Prescription PPI and mucosal protectants (Thuốc ức chế bơm proton và bảo vệ niêm mạc)",
+      "category": "MEDICATION",
+      "amountRequested": 4000000
+    }
+  ],
+  "documents": [
+    {
+      "docId": "DOC-005",
+      "docType": "HOSPITAL_DISCHARGE",
+      "fileName": "so_kham_benh.pdf",
+      "uploadedAt": "2026-03-02T11:00:00Z",
+      "status": "VALID",
+      "notes": "Outpatient consultation record"
+    },
+    {
+      "docId": "DOC-006",
+      "docType": "DETAILED_INVOICE",
+      "fileName": "hoa_don_thuoc.pdf",
+      "uploadedAt": "2026-03-02T11:00:00Z",
+      "status": "VALID"
+    },
+    {
+      "docId": "DOC-007",
+      "docType": "VAT_INVOICE",
+      "fileName": "vat_outpatient.pdf",
+      "uploadedAt": "2026-03-02T11:00:00Z",
+      "status": "VALID"
+    }
+  ],
+  "createdAt": "2026-03-02T14:00:00Z",
+  "updatedAt": "2026-03-02T14:00:00Z"
+}

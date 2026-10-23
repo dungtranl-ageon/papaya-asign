@@ -1,17 +1,56 @@
-# Security & Secrets (Zero Secret Leaks)
-**/mcp_config.json
-.env
-.env.*
-*.key
-*.pem
-
-# Dependencies & Build
+# Dependencies & Package Managers
 node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build Outputs & Bundles
 dist/
 build/
+.next/
+out/
+*.tsbuildinfo
+.turbo/
 
-# OS & Temp
+# Security & Secrets (Zero Secret Leaks)
+**/mcp_config.json
+!**/.agents/mcp_config.example.json
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.cert
+*.crt
+
+# Local Database & Storage
+data/*.db
+data/*.db-journal
+data/*.sqlite
+data/*.sqlite-journal
+*.db
+*.db-journal
+
+# Auxiliary AI Model Weights / Cache (Big Data / Heavy files)
+models/
+cache/
+.cache/
+data/raw_large/
+
+# Operating System & IDE Temp
 .DS_Store
 Thumbs.db
 *.log
 scratch/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Test Coverage & Artifacts
+coverage/
+.nyc_output/
+playwright-report/
+test-results/

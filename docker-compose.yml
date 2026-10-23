@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL (Optional - for Enterprise / Production Persistent Storage)
+  # Default local execution uses SQLite zero-setup database.
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: papaya_postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: papaya
+      POSTGRES_PASSWORD: papaya_secret
+      POSTGRES_DB: papaya_claims
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U papaya -d papaya_claims']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # Local Ollama AI Engine (Optional - Profile: ai)
+  # Run with: docker compose --profile ai up -d
+  # ----------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: papaya_ollama
+    profiles: ['ai']
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  ollama_models:
+    driver: local

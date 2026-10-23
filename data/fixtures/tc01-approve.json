@@ -1,0 +1,75 @@
+{
+  "claimId": "CLM-2026-001",
+  "policyNumber": "POL-GOLD-99882",
+  "patientName": "Nguyen Van A",
+  "nationalId": "001099012345",
+  "hospitalName": "FV Hospital",
+  "admissionDate": "2026-03-10T08:30:00Z",
+  "dischargeDate": "2026-03-13T14:00:00Z",
+  "diagnosisIcd10": "K35",
+  "diagnosisDescription": "Acute appendicitis with localized peritonitis",
+  "status": "SUBMITTED",
+  "totalRequested": 45000000,
+  "items": [
+    {
+      "itemId": "ITM-001",
+      "description": "Laparoscopic Appendectomy (Phẫu thuật nội soi cắt ruột thừa)",
+      "category": "SURGERY",
+      "amountRequested": 25000000
+    },
+    {
+      "itemId": "ITM-002",
+      "description": "Inpatient Room & Board (Phòng nội trú tiêu chuẩn 3 ngày)",
+      "category": "INPATIENT",
+      "amountRequested": 9000000
+    },
+    {
+      "itemId": "ITM-003",
+      "description": "Post-op Antibiotics & Analgesics (Thuốc kháng sinh và giảm đau sau mổ)",
+      "category": "MEDICATION",
+      "amountRequested": 6000000
+    },
+    {
+      "itemId": "ITM-004",
+      "description": "Pre-operative Ultrasound & Blood Tests (Siêu âm bụng và xét nghiệm máu cấp cứu)",
+      "category": "LABORATORY",
+      "amountRequested": 5000000
+    }
+  ],
+  "documents": [
+    {
+      "docId": "DOC-001",
+      "docType": "HOSPITAL_DISCHARGE",
+      "fileName": "giay_ra_vien_nguyen_van_a.pdf",
+      "uploadedAt": "2026-03-14T09:15:00Z",
+      "status": "VALID",
+      "notes": "Original discharge letter signed by Head of Surgery"
+    },
+    {
+      "docId": "DOC-002",
+      "docType": "DETAILED_INVOICE",
+      "fileName": "bang_ke_chi_tiet_vien_phi.pdf",
+      "uploadedAt": "2026-03-14T09:15:00Z",
+      "status": "VALID",
+      "notes": "Itemized hospital bill matching claimed items"
+    },
+    {
+      "docId": "DOC-003",
+      "docType": "VAT_INVOICE",
+      "fileName": "hoa_don_vat_dien_tu_fv.pdf",
+      "uploadedAt": "2026-03-14T09:15:00Z",
+      "status": "VALID",
+      "notes": "Electronic VAT invoice verified with Tax Authority"
+    },
+    {
+      "docId": "DOC-004",
+      "docType": "SURGICAL_REPORT",
+      "fileName": "phieu_phau_thuat_noi_soi.pdf",
+      "uploadedAt": "2026-03-14T09:15:00Z",
+      "status": "VALID",
+      "notes": "Confirms acute appendicitis surgery"
+    }
+  ],
+  "createdAt": "2026-03-14T10:00:00Z",
+  "updatedAt": "2026-03-14T10:00:00Z"
+}

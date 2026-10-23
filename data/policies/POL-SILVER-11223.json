@@ -1,0 +1,41 @@
+{
+  "policyNumber": "POL-SILVER-11223",
+  "insuredName": "Tran Thi B",
+  "nationalId": "079198054321",
+  "planName": "Healthcare Silver",
+  "status": "ACTIVE",
+  "effectiveDate": "2026-01-01T00:00:00Z",
+  "expiryDate": "2026-12-31T23:59:59Z",
+  "annualTotalLimit": 200000000,
+  "annualUsedAmount": 0,
+  "waitingPeriods": {
+    "PRE_EXISTING": 365,
+    "SPECIAL_DISEASE": 180
+  },
+  "exclusions": [
+    "K21",
+    "K29",
+    "M54.5"
+  ],
+  "benefits": [
+    {
+      "category": "INPATIENT",
+      "maxLimitPerClaim": 20000000,
+      "maxLimitPerYear": 80000000,
+      "copayRate": 0.2,
+      "subLimitPerDay": 1500000
+    },
+    {
+      "category": "OUTPATIENT",
+      "maxLimitPerClaim": 3000000,
+      "maxLimitPerYear": 15000000,
+      "copayRate": 0.2
+    },
+    {
+      "category": "MEDICATION",
+      "maxLimitPerClaim": 5000000,
+      "maxLimitPerYear": 20000000,
+      "copayRate": 0.2
+    }
+  ]
+}

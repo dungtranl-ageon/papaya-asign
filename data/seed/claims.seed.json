@@ -1,0 +1,17 @@
+[
+  {
+    "claimId": "CLM-2026-001",
+    "case": "TC01_APPROVE",
+    "expectedDecision": "APPROVE"
+  },
+  {
+    "claimId": "CLM-2026-002",
+    "case": "TC02_REJECT",
+    "expectedDecision": "REJECT"
+  },
+  {
+    "claimId": "CLM-2026-003",
+    "case": "TC03_REQUEST_MORE_INFO",
+    "expectedDecision": "REQUEST_MORE_INFO"
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "name": "@papaya/mcp-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dual-Export MCP Server and Mastra Tools for Papaya Claims Assessment",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "papaya-mcp": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node ./dist/server.js",
+    "lint": "eslint \"src/**/*.ts\"",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.4.0",
+    "@papaya/shared": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Claim, Policy, AssessmentReport } from '@papaya/shared';
 import { executeClaimsAssessmentWorkflow } from './mastra.workflow';
 import { Observable, Subject } from 'rxjs';
@@ -12,8 +11,6 @@ export interface SseEventPayload {
 export class MastraService {
   private readonly logger = new Logger(MastraService.name);
 
-  constructor(private readonly configService: ConfigService) {}
-
   /**
    * Run assessment workflow with real-time SSE event streaming
    */
@@ -21,7 +18,7 @@ export class MastraService {
     const subject = new Subject<SseEventPayload>();
 
     executeClaimsAssessmentWorkflow({ claim, policy }, (stepEvent, data) => {
-      this.logger.info(`Workflow step [${stepEvent}] on claim ${claim.claimId}`);
+      this.logger.log(`Workflow step [${stepEvent}] on claim ${claim.claimId}`);
       subject.next({
         data: JSON.stringify({
           event: stepEvent,

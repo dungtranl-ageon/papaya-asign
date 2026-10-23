@@ -16,7 +16,7 @@ async function bootstrap() {
   });
 
   await app.listen(port);
-  logger.info(`Papaya Core API running on: http://localhost:${port}`);
+  logger.log(`Papaya Core API running on: http://localhost:${port}`);
 }
 
 bootstrap();

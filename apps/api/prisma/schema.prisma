@@ -58,6 +58,10 @@ model Claim {
   assessments          Assessment[]
   auditLogs            AuditLog[]
 
+  @@index([status])
+  @@index([diagnosisIcd10])
+  @@index([nationalId])
+  @@index([policyNumber, status])
   @@map("claims")
 }
 
@@ -100,5 +104,6 @@ model AuditLog {
 
   claim      Claim    @relation(fields: [claimId], references: [claimId])
 
+  @@index([claimId, timestamp])
   @@map("audit_logs")
 }

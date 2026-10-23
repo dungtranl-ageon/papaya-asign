@@ -1,0 +1,37 @@
+{
+  "policyNumber": "POL-PLATINUM-88888",
+  "insuredName": "Dang Thi D",
+  "nationalId": "001199554433",
+  "planName": "Healthcare Platinum VIP",
+  "status": "ACTIVE",
+  "effectiveDate": "2026-01-01T00:00:00Z",
+  "expiryDate": "2026-12-31T23:59:59Z",
+  "annualTotalLimit": 1000000000,
+  "annualUsedAmount": 0,
+  "waitingPeriods": {
+    "PRE_EXISTING": 180,
+    "SPECIAL_DISEASE": 90
+  },
+  "exclusions": ["Z41.1"],
+  "benefits": [
+    {
+      "category": "INPATIENT",
+      "maxLimitPerClaim": 100000000,
+      "maxLimitPerYear": 500000000,
+      "copayRate": 0.0,
+      "subLimitPerDay": 5000000
+    },
+    {
+      "category": "SURGERY",
+      "maxLimitPerClaim": 100000000,
+      "maxLimitPerYear": 400000000,
+      "copayRate": 0.0
+    },
+    {
+      "category": "MEDICATION",
+      "maxLimitPerClaim": 30000000,
+      "maxLimitPerYear": 100000000,
+      "copayRate": 0.0
+    }
+  ]
+}

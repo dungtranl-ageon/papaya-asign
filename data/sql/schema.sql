@@ -78,5 +78,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_claims_status ON claims(status);
 CREATE INDEX IF NOT EXISTS idx_claims_policy ON claims(policy_number);
+CREATE INDEX IF NOT EXISTS idx_claims_diagnosis ON claims(diagnosis_icd10);
+CREATE INDEX IF NOT EXISTS idx_claims_national_id ON claims(national_id);
+CREATE INDEX IF NOT EXISTS idx_claims_policy_status ON claims(policy_number, status);
 CREATE INDEX IF NOT EXISTS idx_assessments_claim ON assessments(claim_id);
-CREATE INDEX IF NOT EXISTS idx_audit_claim ON audit_logs(claim_id);
+CREATE INDEX IF NOT EXISTS idx_audit_claim_time ON audit_logs(claim_id, timestamp);

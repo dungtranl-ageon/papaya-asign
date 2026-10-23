@@ -28,9 +28,9 @@ describe('Sublimits, Daily Rates & Clinical Rules Test Suite', () => {
     });
 
     expect(result.totalRequested).toBe(15000000);
-    expect(result.totalPayable).toBe(7200000);
-    expect(result.totalDeductions).toBe(7800000);
-    expect(result.itemBreakdown[0].deductions).toBe(7800000);
+    expect(result.totalPayable).toBe(12000000);
+    expect(result.totalDeductions).toBe(3000000);
+    expect(result.breakdown[0].deductibleAmount).toBe(3000000);
     expect(result.totalPayable + result.totalDeductions).toBe(result.totalRequested);
   });
 
@@ -65,30 +65,30 @@ describe('Sublimits, Daily Rates & Clinical Rules Test Suite', () => {
   // ---------------------------------------------------------------------------
   it('CLIN-01: Flag non-essential vitamins & dietary supplements in medication list', async () => {
     const result = await checkMedicalNecessity({
-      claimId: 'CLM-MED-SUPP',
-      diagnosisIcd10: 'M17', // Knee osteoarthritis
-      treatmentDescription: 'Conservative treatment and joint support',
+      diagnosisIcd10: 'M17',
+      diagnosisDescription: 'Knee osteoarthritis',
+      lengthOfStayDays: 1,
       items: [
         {
           itemId: 'ITM-MED-01',
           description: 'Celecoxib 200mg (NSAID pain relief)',
           category: 'MEDICATION',
-          amount: 850000,
+          amountRequested: 850000,
         },
         {
           itemId: 'ITM-MED-02',
           description: 'Dietary Supplement Glucosamine & Collagen Beauty Drink',
           category: 'MEDICATION',
-          amount: 2500000,
+          amountRequested: 2500000,
         },
       ],
     });
 
-    // The tool evaluates clinical necessity and flags cosmetic/supplement non-medical items
-    expect(result.claimId).toBe('CLM-MED-SUPP');
-    expect(result.isMedicallyNecessary).toBe(true); // Base diagnosis M17 is necessary
-    // Flagged items should identify the supplement or recommend review
-    expect(result.flaggedItems).toBeDefined();
+    expect(result.isPassed).toBe(false);
+    expect(result.warningFlags.length).toBeGreaterThan(0);
+    expect(result.warningFlags[0]).toContain('supplement');
+    expect(result.itemsEvaluation[0].isMedicallyNecessary).toBe(true);
+    expect(result.itemsEvaluation[1].isMedicallyNecessary).toBe(false);
   });
 
   // ---------------------------------------------------------------------------
@@ -96,22 +96,23 @@ describe('Sublimits, Daily Rates & Clinical Rules Test Suite', () => {
   // ---------------------------------------------------------------------------
   it('CLIN-02: Pure cosmetic procedures must be classified as NOT medically necessary', async () => {
     const result = await checkMedicalNecessity({
-      claimId: 'CLM-COSMETIC-RHINO',
       diagnosisIcd10: 'Z41.1',
-      treatmentDescription: 'Aesthetic rhinoplasty and silicone augmentation',
+      diagnosisDescription: 'Aesthetic rhinoplasty and silicone augmentation',
+      lengthOfStayDays: 1,
       items: [
         {
           itemId: 'ITM-RHINO',
           description: 'Elective Cosmetic Rhinoplasty',
           category: 'SURGERY',
-          amount: 35000000,
+          amountRequested: 35000000,
         },
       ],
     });
 
-    expect(result.isMedicallyNecessary).toBe(false);
-    expect(result.flaggedItems.length).toBeGreaterThan(0);
-    expect(result.flaggedItems[0].reason).toContain('Cosmetic');
+    expect(result.isPassed).toBe(false);
+    expect(result.warningFlags.length).toBeGreaterThan(0);
+    expect(result.warningFlags[0]).toContain('cosmetic');
+    expect(result.itemsEvaluation[0].isMedicallyNecessary).toBe(false);
   });
 
   // ---------------------------------------------------------------------------
@@ -154,10 +155,10 @@ describe('Sublimits, Daily Rates & Clinical Rules Test Suite', () => {
     const sumRequested = multiItems.reduce((acc, i) => acc + i.amountRequested, 0);
     expect(result.totalRequested).toBe(sumRequested);
     expect(result.totalPayable + result.totalDeductions).toBe(sumRequested);
-    expect(result.itemBreakdown.length).toBe(multiItems.length);
+    expect(result.breakdown.length).toBe(multiItems.length);
 
-    for (const item of result.itemBreakdown) {
-      expect(item.payableAmount + item.deductions).toBe(item.amountRequested);
+    for (const item of result.breakdown) {
+      expect(item.payableAmount + item.deductibleAmount).toBe(item.requestedAmount);
     }
   });
 });

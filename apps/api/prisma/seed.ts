@@ -67,6 +67,27 @@ async function main() {
     }
   }
 
+  // Seed Sample AuditLog (Human-in-the-Loop demonstration)
+  await prisma.auditLog.upsert({
+    where: { id: 'AUD-SEED-001' },
+    update: {},
+    create: {
+      id: 'AUD-SEED-001',
+      claimId: 'CLM-2026-003',
+      actorId: 'ASSESSOR_01',
+      actorRole: 'ASSESSOR',
+      actionType: 'REQUEST_INFO',
+      oldValue: JSON.stringify({ status: 'SUBMITTED' }),
+      newValue: JSON.stringify({
+        status: 'PENDING_MORE_INFO',
+        missing: ['HOSPITAL_DISCHARGE'],
+      }),
+      reason:
+        'Detailed invoice is unreadable and blurred. Requesting official stamped hospital invoice.',
+    },
+  });
+  console.info('Seeded Sample AuditLog: AUD-SEED-001');
+
   console.info('Prisma database seeding completed successfully.');
 }
 

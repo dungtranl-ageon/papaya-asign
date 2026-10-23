@@ -1,0 +1,37 @@
+{
+  "policyNumber": "POL-BRONZE-55441",
+  "insuredName": "Le Van C",
+  "nationalId": "048200112233",
+  "planName": "Healthcare Bronze",
+  "status": "ACTIVE",
+  "effectiveDate": "2026-01-01T00:00:00Z",
+  "expiryDate": "2026-12-31T23:59:59Z",
+  "annualTotalLimit": 100000000,
+  "annualUsedAmount": 10000000,
+  "waitingPeriods": {
+    "PRE_EXISTING": 365,
+    "SPECIAL_DISEASE": 180
+  },
+  "exclusions": ["K21", "M54.5", "Q21"],
+  "benefits": [
+    {
+      "category": "INPATIENT",
+      "maxLimitPerClaim": 15000000,
+      "maxLimitPerYear": 50000000,
+      "copayRate": 0.3,
+      "subLimitPerDay": 1000000
+    },
+    {
+      "category": "SURGERY",
+      "maxLimitPerClaim": 30000000,
+      "maxLimitPerYear": 60000000,
+      "copayRate": 0.3
+    },
+    {
+      "category": "MEDICATION",
+      "maxLimitPerClaim": 5000000,
+      "maxLimitPerYear": 20000000,
+      "copayRate": 0.3
+    }
+  ]
+}

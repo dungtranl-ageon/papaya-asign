@@ -1,28 +1,55 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Agent } from '@mastra/core/agent';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText, streamText } from 'ai';
 import { ASSESSOR_COPILOT_SYSTEM_PROMPT } from '../prompts/assessor.prompts';
 import { PolicyRagService } from '../rag/policy-rag.service';
 import { Claim, Policy, AssessmentReport } from '@papaya/shared';
+import { sanitizeUserFacingText } from '../guardrails/jargon-filter.guardrail';
 
+/**
+ * Creates the provider model instance for Mastra
+ */
+export function getMastraLanguageModel() {
+  const baseURL = process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1';
+  const apiKey = process.env.OPENAI_API_KEY || 'ollama';
+  const modelName = process.env.MODEL_NAME || 'llama3.3';
+
+  const provider = createOpenAI({
+    baseURL,
+    apiKey,
+  });
+
+  return provider(modelName);
+}
+
+/**
+ * Explicit Mastra Agent Instance Factory
+ */
+export function createAssessorCopilotAgent(model = getMastraLanguageModel()) {
+  return new Agent({
+    id: 'assessorCopilotAgent',
+    name: 'assessorCopilotAgent',
+    description: 'Trợ lý Thẩm định Bồi thường Bảo hiểm Y tế chuyên sâu',
+    instructions: ASSESSOR_COPILOT_SYSTEM_PROMPT,
+    model,
+  });
+}
+
+/**
+ * Global singleton Mastra Agent instance
+ */
+export const assessorCopilotAgent = createAssessorCopilotAgent();
+
+/**
+ * NestJS Injectable Wrapper for Assessor Copilot Agent
+ * Integrates RAG retrieval, guardrails, and streaming response
+ */
 @Injectable()
 export class AssessorCopilotAgent {
   private readonly logger = new Logger(AssessorCopilotAgent.name);
 
   constructor(private readonly ragService: PolicyRagService) {}
-
-  private getModel() {
-    const baseURL = process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1';
-    const apiKey = process.env.OPENAI_API_KEY || 'ollama';
-    const modelName = process.env.MODEL_NAME || 'llama3.3';
-
-    const provider = createOpenAI({
-      baseURL,
-      apiKey,
-    });
-
-    return provider(modelName);
-  }
 
   /**
    * Conversational QA for Assessor with RAG-grounded policy context
@@ -41,47 +68,48 @@ export class AssessorCopilotAgent {
       .map(c => `[${c.clauseId}] ${c.title}\n${c.content}`)
       .join('\n\n');
 
-    // 2. Prepare context prompt
+    // 2. Prepare context prompt in strict insurance domain language
     const prompt = `
-THÔNG TIN HỒ SƠ CLAIM HIỆN TẠI:
+THÔNG TIN HỒ SƠ YÊU CẦU BỒI THƯỜNG:
 - Mã hồ sơ: ${claim.claimId}
-- Người bệnh: ${claim.patientName} (CCCD: ${claim.nationalId})
-- Chẩn đoán: ${claim.diagnosisIcd10} - ${claim.diagnosisDescription}
-- Bệnh viện: ${claim.hospitalName}
-- Tổng tiền yêu cầu: ${claim.totalRequested.toLocaleString()} VND
+- Người được bảo hiểm: ${claim.patientName} (CCCD/CMND: ${claim.nationalId})
+- Chẩn đoán y khoa: ${claim.diagnosisIcd10} - ${claim.diagnosisDescription}
+- Cơ sở y tế điều trị: ${claim.hospitalName}
+- Tổng số tiền đề nghị bồi thường: ${claim.totalRequested.toLocaleString()} VND
 
-KẾT QUẢ THẨM ĐỊNH (NẾU CÓ):
+KẾT QUẢ THẨM ĐỊNH HIỆN TẠI (NẾU CÓ):
 ${
   assessmentReport
-    ? `- Khuyến nghị: ${assessmentReport.finalRecommendation}
-- Số tiền duyệt: ${assessmentReport.totalPayable.toLocaleString()} VND
-- Số tiền khấu trừ/đồng chi trả: ${assessmentReport.totalDeductions.toLocaleString()} VND
-- Điểm tin cậy: ${assessmentReport.confidenceScore}%
-- Tóm tắt: ${assessmentReport.executiveSummary}`
-    : 'Chưa chạy thẩm định tự động.'
+    ? `- Kết luận khuyến nghị: ${assessmentReport.finalRecommendation}
+- Số tiền bảo hiểm chấp thuận chi trả: ${assessmentReport.totalPayable.toLocaleString()} VND
+- Số tiền khấu trừ / đồng chi trả: ${assessmentReport.totalDeductions.toLocaleString()} VND
+- Mức độ tin cậy đánh giá: ${assessmentReport.confidenceScore}%
+- Tóm tắt giám định: ${assessmentReport.executiveSummary}`
+    : 'Hồ sơ chưa thực hiện thẩm định tự động.'
 }
 
-ĐIỀU KHOẢN HỢP ĐỒNG LIÊN QUAN (RAG RETRIEVED):
+CÁC ĐIỀU KHOẢN HỢP ĐỒNG BẢO HIỂM ÁP DỤNG:
 ${clauseContext}
 
-CÂU HỎI CỦA CHUYÊN VIÊN:
+CÂU HỎI TỪ CHUYÊN VIÊN THẨM ĐỊNH:
 "${query}"
 `;
 
     try {
       const response = await generateText({
-        model: this.getModel(),
+        model: getMastraLanguageModel(),
         system: ASSESSOR_COPILOT_SYSTEM_PROMPT,
         prompt,
       });
 
-      return response.text;
+      // Apply Guardrail Sanitizer to guarantee no internal tech leaks
+      return sanitizeUserFacingText(response.text);
     } catch (error) {
-      this.logger.error('Error generating response from LLM Gateway:', error);
-      // Fallback response with grounded RAG clauses
-      return `Không thể kết nối đến LLM Gateway (${process.env.OPENAI_BASE_URL}). 
+      this.logger.error('Lỗi kết nối bộ xử lý ngôn ngữ:', error);
+      const fallback = `Hệ thống tạm thời không thể kết nối tới dịch vụ trí tuệ nhân tạo.
 Dưới đây là các điều khoản hợp đồng tra cứu tự động cho câu hỏi của bạn:
 ${clauseContext}`;
+      return sanitizeUserFacingText(fallback);
     }
   }
 
@@ -101,16 +129,16 @@ ${clauseContext}`;
       .join('\n\n');
 
     const prompt = `
-HỒ SƠ: ${claim.claimId} | BỆNH NHÂN: ${claim.patientName} | CHẨN ĐOÁN: ${claim.diagnosisIcd10}
-ĐIỀU KHOẢN HỢP ĐỒNG:
+HỒ SƠ BỒI THƯỜNG: ${claim.claimId} | BỆNH NHÂN: ${claim.patientName} | CHẨN ĐOÁN: ${claim.diagnosisIcd10}
+ĐIỀU KHOẢN HỢP ĐỒNG LIÊN QUAN:
 ${clauseContext}
 
-BÁO CÁO: ${assessmentReport ? `${assessmentReport.finalRecommendation} - Duyệt: ${assessmentReport.totalPayable.toLocaleString()} VND` : 'N/A'}
+KẾT QUẢ THẨM ĐỊNH: ${assessmentReport ? `${assessmentReport.finalRecommendation} - Số tiền chi trả: ${assessmentReport.totalPayable.toLocaleString()} VND` : 'Chưa có'}
 CÂU HỎI: "${query}"
 `;
 
     return streamText({
-      model: this.getModel(),
+      model: getMastraLanguageModel(),
       system: ASSESSOR_COPILOT_SYSTEM_PROMPT,
       prompt,
     });

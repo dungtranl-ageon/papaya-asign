@@ -4,6 +4,8 @@ import { executeClaimsAssessmentWorkflow } from './workflows/assessment.workflow
 import { AssessorCopilotAgent } from './agents/assessor.agent';
 import { Observable, Subject } from 'rxjs';
 
+import { mastra, MastraInstance } from './mastra.instance';
+
 export interface SseEventPayload {
   data: string;
 }
@@ -13,6 +15,13 @@ export class MastraService {
   private readonly logger = new Logger(MastraService.name);
 
   constructor(private readonly copilotAgent: AssessorCopilotAgent) {}
+
+  /**
+   * Access to the underlying Mastra Core instance registry
+   */
+  getMastra(): MastraInstance {
+    return mastra;
+  }
 
   /**
    * Run assessment workflow with real-time SSE event streaming

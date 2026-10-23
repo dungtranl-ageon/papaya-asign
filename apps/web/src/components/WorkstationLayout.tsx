@@ -111,14 +111,15 @@ export function WorkstationLayout() {
         </section>
 
         {/* Right Pane: AI Copilot & Assessment Workflow (45%) */}
+        {/* Right Pane: Trợ lý Thẩm định Bồi thường (45%) */}
         <section className="w-[45%] flex flex-col bg-slate-50">
           <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-teal-600" />
-              <h2 className="font-semibold text-slate-800 text-sm">Mastra Hybrid Copilot</h2>
+              <h2 className="font-semibold text-slate-800 text-sm">Trợ lý Thẩm định Bồi thường</h2>
             </div>
             <button className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
-              Run Auto-Assessment
+              Khởi chạy Thẩm định
             </button>
           </div>
 
@@ -127,19 +128,19 @@ export function WorkstationLayout() {
             <div className="grid grid-cols-4 gap-2 text-center text-xs">
               <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex flex-col items-center">
                 <CheckCircle2 className="h-3.5 w-3.5 mb-1 text-emerald-600" />
-                <span>Documents</span>
+                <span>Chứng từ</span>
               </div>
               <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex flex-col items-center">
                 <CheckCircle2 className="h-3.5 w-3.5 mb-1 text-emerald-600" />
-                <span>Policy</span>
+                <span>Hợp đồng</span>
               </div>
               <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex flex-col items-center">
                 <CheckCircle2 className="h-3.5 w-3.5 mb-1 text-emerald-600" />
-                <span>Necessity</span>
+                <span>Chỉ định y khoa</span>
               </div>
               <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex flex-col items-center">
                 <CheckCircle2 className="h-3.5 w-3.5 mb-1 text-emerald-600" />
-                <span>Benefits</span>
+                <span>Chiết tính</span>
               </div>
             </div>
           </div>
@@ -151,11 +152,12 @@ export function WorkstationLayout() {
                 AI
               </div>
               <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-none p-3.5 text-xs text-slate-700 max-w-[85%] shadow-sm">
-                <p className="font-semibold text-slate-900 mb-1">Assessment Assessment Ready</p>
+                <p className="font-semibold text-slate-900 mb-1">Báo cáo Thẩm định Sẵn sàng</p>
                 <p>
-                  Claim #CLM-2026-001 has passed all 4 verification steps. Laparoscopic Appendectomy
-                  is deemed medically necessary. Under policy <strong>POL-GOLD-99882</strong> (20%
-                  copay on surgery), eligible payable amount is <strong>36,000,000 VND</strong>.
+                  Hồ sơ #CLM-2026-001 đã vượt qua 4 bước kiểm tra tự động. Phẫu thuật nội soi viêm
+                  ruột thừa được xác nhận phù hợp chỉ định y khoa. Theo quy tắc hợp đồng{' '}
+                  <strong>POL-GOLD-99882</strong> (đồng chi trả 20% phẫu thuật), số tiền bảo hiểm
+                  chi trả hợp lệ là <strong>36.000.000 VND</strong>.
                 </p>
               </div>
             </div>
@@ -166,7 +168,7 @@ export function WorkstationLayout() {
             <div className="flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Ask Mastra Copilot or instruct an override..."
+                placeholder="Đặt câu hỏi về điều khoản hợp đồng hoặc yêu cầu điều chỉnh..."
                 className="flex-1 bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-teal-600"
               />
               <button className="p-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors">

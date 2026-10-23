@@ -59,6 +59,89 @@ Tài liệu này đặc tả chi tiết toàn bộ kiến trúc giao diện ngư
 
 ---
 
+## 2.1. Sơ đồ Luồng Điều hướng & Trải nghiệm Người dùng (User Journey & Screen Navigation Flow)
+
+Sơ đồ dưới đây mô tả chi tiết toàn bộ chu trình di chuyển của Chuyên viên thẩm định (Assessor) qua các màn hình, popup modal và drawer nghiệp vụ:
+
+```mermaid
+flowchart TD
+    subgraph S1["Màn hình 1: Danh sách Hồ sơ (Claims Queue & Inbox)"]
+        Queue["Danh sách hồ sơ cần xử lý<br/>- Bộ lọc SLA, Risk, Loại claim<br/>- KPI Cards tổng quan"]
+        BtnNewClaim["[+ Nhập Hồ Sơ Mới]<br/>(Cmd + N)"]
+        BtnAssess["[Thẩm định Ngay]<br/>(Click dòng hồ sơ)"]
+    end
+
+    subgraph ModalNew["Modal E: Nhập liệu Hồ sơ Mới"]
+        FormIngest["Form tạo hồ sơ & chứng từ<br/>- Nạp nhanh Preset TC-01, 02, 03<br/>- Kéo thả tệp tin"]
+        BtnSaveSubmit["[Lưu & Khởi chạy Thẩm định]"]
+    end
+
+    subgraph S2["Màn hình 2: Bàn Thẩm định (Dual-Pane Workstation)"]
+        Workstation["Giao diện chia đôi Dual-Pane"]
+        LeftPane["Cột trái (55%): Ground-Truth Dossier<br/>- Thẻ HĐ & Bệnh án ICD-10<br/>- Trình xem chứng từ tương tác<br/>- Lớp nhận diện OCR"]
+        RightPane["Cột phải (45%): AI Copilot Chat<br/>- Quy trình 4 bước thẩm định<br/>- Thẻ Generative UI chiết tính<br/>- Pill trích dẫn điều khoản RAG"]
+        BtnBack["[<- Quay lại Danh sách]<br/>(Breadcrumb)"]
+    end
+
+    subgraph Drawers["Secondary Drawers (Hỗ trợ tra cứu)"]
+        PolicyDrawer["PolicyBrowserDrawer (Trượt phải)<br/>Cây thư mục toàn văn điều khoản HĐ"]
+        AuditDrawer["AuditTrailDrawer (Trượt đáy)<br/>Nhật ký sự kiện bất biến (Event Log)"]
+    end
+
+    subgraph Modals["Hệ thống Action Modals (Human-In-The-Loop)"]
+        ModalApprove["Modal A: Xác nhận Phê duyệt<br/>- Lịch chi trả Vietcombank<br/>- Gửi Email/SMS tự động"]
+        ModalReject["Modal B: Từ chối Bồi thường<br/>- Căn cứ điều khoản loại trừ<br/>- Soạn thư & hạn khiếu nại 30 ngày"]
+        ModalNeedInfo["Modal C: Yêu cầu Bổ sung Chứng từ<br/>- Checklist chứng từ thiếu<br/>- Magic Link upload cho KH"]
+        ModalOverride["Modal D: Ghi đè Quyết định/Số tiền<br/>- Nhập số tiền điều chỉnh<br/>- Bắt buộc nhập lý do Audit Trail"]
+    end
+
+    %% Screen transitions
+    Queue -->|Click nút tạo mới| BtnNewClaim --> FormIngest
+    FormIngest -->|Hủy bỏ / Esc| Queue
+    FormIngest -->|Lưu & Chuyển sang thẩm định| BtnSaveSubmit --> Workstation
+
+    Queue -->|Click xem chi tiết| BtnAssess --> Workstation
+    Workstation --> LeftPane
+    Workstation --> RightPane
+
+    Workstation -->|Bấm nút Back| BtnBack --> Queue
+
+    %% Drawer triggers
+    RightPane -.->|Click icon Hợp đồng| PolicyDrawer
+    RightPane -.->|Click icon Audit Log| AuditDrawer
+    PolicyDrawer -.->|Đóng / Esc| Workstation
+    AuditDrawer -.->|Đóng / Esc| Workstation
+
+    %% Modal triggers
+    LeftPane -->|Bấm [Phê duyệt] (Cmd+Enter)| ModalApprove
+    LeftPane -->|Bấm [Từ chối] (Cmd+Shift+R)| ModalReject
+    LeftPane -->|Bấm [Bổ sung] (Cmd+Shift+I)| ModalNeedInfo
+    LeftPane -->|Bấm [Ghi đè]| ModalOverride
+
+    %% Modal completion loops
+    ModalApprove -->|Xác nhận thành công -> Cập nhật APPROVED| Queue
+    ModalReject -->|Xác nhận từ chối -> Cập nhật REJECTED| Queue
+    ModalNeedInfo -->|Gửi yêu cầu -> Cập nhật NEED_INFO| Queue
+    ModalOverride -->|Lưu quyết định ghi đè| Workstation
+```
+
+### Bảng Ma trận Chuyển dịch Màn hình (Screen Transition Matrix)
+
+| Màn hình / Thao tác                    | Điểm xuất phát           | Đích đến                         | Điều kiện / Dữ liệu cập nhật (State Mutation)                                                       |
+| :------------------------------------- | :----------------------- | :------------------------------- | :-------------------------------------------------------------------------------------------------- |
+| **1. Mở Bàn Thẩm định**                | Màn hình 1 (Queue)       | Màn hình 2 (Workstation)         | Assessor bấm dòng hồ sơ hoặc nút `[Thẩm định ngay]`. URL chuyển sang `/claims/[id]`.                |
+| **2. Tạo Hồ sơ Mới**                   | Màn hình 1 (Queue)       | Modal E (`ClaimIngestionModal`)  | Assessor bấm `[+ Nhập Hồ Sơ Mới]` hoặc phím `Cmd + N`.                                              |
+| **3. Khởi chạy Thẩm định sau khi tạo** | Modal E                  | Màn hình 2 (Workstation)         | Hồ sơ lưu vào DB, chuyển thẳng vào Workstation và tự động kích hoạt Mastra Workflow 4 bước.         |
+| **4. Quay lại Danh sách**              | Màn hình 2 (Workstation) | Màn hình 1 (Queue)               | Assessor bấm nút breadcrumb `[<- Quay lại Danh sách]`.                                              |
+| **5. Phê duyệt Bồi thường**            | Màn hình 2 (Workstation) | Modal A (`ApproveClaimModal`)    | Assessor bấm `[Phê duyệt]` hoặc phím `Cmd + Enter`. Hoàn tất đổi trạng thái claim thành `APPROVED`. |
+| **6. Từ chối Chi trả**                 | Màn hình 2 (Workstation) | Modal B (`RejectClaimModal`)     | Assessor bấm `[Từ chối]` hoặc `Cmd + Shift + R`. Đổi trạng thái claim thành `REJECTED`.             |
+| **7. Yêu cầu Bổ sung**                 | Màn hình 2 (Workstation) | Modal C (`RequestMoreInfoModal`) | Assessor bấm `[Yêu cầu bổ sung]`. Đổi trạng thái thành `NEED_INFO`, tạo Magic upload link.          |
+| **8. Ghi đè Quyết định**               | Màn hình 2 (Workstation) | Modal D (`ManualOverrideModal`)  | Assessor bấm `[Ghi đè thủ công]`. Nhập số tiền/lý do, lưu record bất biến vào `audit_logs`.         |
+| **9. Tra cứu Điều khoản**              | Màn hình 2 (Workstation) | `PolicyBrowserDrawer`            | Bấm nút sách điều khoản hoặc click vào `PolicyCitationPill` trong chat. Trượt mở từ mép phải.       |
+| **10. Xem Lịch sử Giám định**          | Màn hình 2 (Workstation) | `AuditTrailDrawer`               | Bấm nút `[Audit Log]` trên thanh header. Trượt mở từ mép đáy màn hình.                              |
+
+---
+
 ## 3. Wireframe Màn hình 1: Danh sách Hồ sơ Bồi thường (Claims Queue & Inbox)
 
 Màn hình đầu tiên khi Assessor đăng nhập hệ thống, hiển thị danh sách hồ sơ bồi thường cần xử lý, cảnh báo hạn xử lý (SLA) và cờ rủi ro gian lận.

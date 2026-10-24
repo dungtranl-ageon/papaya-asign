@@ -209,33 +209,102 @@ export function generateDynamicClaimPreset(presetType: 'TC01' | 'TC02' | 'TC03')
     }
 
     case 'TC02': {
-      // SCENARIO 2: Excluded Condition GERD K21 (Reject)
+      // SCENARIO 2: Excluded Conditions (Reject via policy exclusion list)
+      // POL-GOLD-99882 exclusions: ["K21", "Z41.1", "F32"]
       // Treatment type: OUTPATIENT (Same day)
       const dischargeDate = admissionDate;
 
-      const endoscopyCost = roundTo100k(faker.number.int({ min: 3500000, max: 5500000 }));
-      const medsCost = roundTo100k(faker.number.int({ min: 3000000, max: 5000000 }));
-      const totalAmount = endoscopyCost + medsCost;
-
-      const items: ClaimPresetItem[] = [
+      const exclusionCandidates = [
         {
-          itemId: 'ITM-005',
-          description: 'Gastroscopy and mucosal biopsy (Nội soi thực quản - dạ dày có sinh thiết)',
-          category: 'OUTPATIENT',
-          amountRequested: endoscopyCost,
+          code: 'K21',
+          desc: 'Gastro-esophageal reflux disease (GERD) with esophagitis (Trào ngược dạ dày thực quản)',
+          generateItems: () => {
+            const endoscopyCost = roundTo100k(faker.number.int({ min: 3500000, max: 5500000 }));
+            const medsCost = roundTo100k(faker.number.int({ min: 3000000, max: 5000000 }));
+            return {
+              items: [
+                {
+                  itemId: 'ITM-005',
+                  description:
+                    'Gastroscopy and mucosal biopsy (Nội soi thực quản - dạ dày có sinh thiết)',
+                  category: 'OUTPATIENT' as const,
+                  amountRequested: endoscopyCost,
+                },
+                {
+                  itemId: 'ITM-006',
+                  description:
+                    'Prescription PPI & mucosal protectants (Thuốc ức chế bơm proton và bảo vệ niêm mạc dạ dày)',
+                  category: 'MEDICATION' as const,
+                  amountRequested: medsCost,
+                },
+              ],
+              medsNote: `Chi tiết thuốc điều trị GERD: ${medsCost.toLocaleString('vi-VN')} đ`,
+            };
+          },
         },
         {
-          itemId: 'ITM-006',
-          description:
-            'Prescription PPI & mucosal protectants (Thuốc ức chế bơm proton và bảo vệ niêm mạc dạ dày)',
-          category: 'MEDICATION',
-          amountRequested: medsCost,
+          code: 'Z41.1',
+          desc: 'Other plastic surgery for unacceptable cosmetic appearance (Phẫu thuật tạo hình thẩm mỹ không do bệnh lý)',
+          generateItems: () => {
+            const surgeryCost = roundTo100k(faker.number.int({ min: 18000000, max: 28000000 }));
+            const medsCost = roundTo100k(faker.number.int({ min: 2500000, max: 4000000 }));
+            return {
+              items: [
+                {
+                  itemId: 'ITM-005',
+                  description:
+                    'Rhinoplasty & Septal cosmetic contouring (Phẫu thuật nâng sống mũi và tạo hình vách ngăn thẩm mỹ)',
+                  category: 'OUTPATIENT' as const,
+                  amountRequested: surgeryCost,
+                },
+                {
+                  itemId: 'ITM-006',
+                  description:
+                    'Post-operative anti-inflammatory and pain relief (Thuốc giảm phù nề, kháng viêm sau phẫu thuật thẩm mỹ)',
+                  category: 'MEDICATION' as const,
+                  amountRequested: medsCost,
+                },
+              ],
+              medsNote: `Chi tiết chi phí can thiệp thẩm mỹ tạo hình: ${surgeryCost.toLocaleString('vi-VN')} đ`,
+            };
+          },
+        },
+        {
+          code: 'F32',
+          desc: 'Depressive episode (Giai đoạn trầm cảm vừa và nặng / Trị liệu tâm thần)',
+          generateItems: () => {
+            const therapyCost = roundTo100k(faker.number.int({ min: 3500000, max: 6000000 }));
+            const medsCost = roundTo100k(faker.number.int({ min: 2500000, max: 4500000 }));
+            return {
+              items: [
+                {
+                  itemId: 'ITM-005',
+                  description:
+                    'Clinical psychological assessment & Cognitive Behavioral Therapy (Đánh giá tâm lý lâm sàng & trị liệu CBT)',
+                  category: 'OUTPATIENT' as const,
+                  amountRequested: therapyCost,
+                },
+                {
+                  itemId: 'ITM-006',
+                  description:
+                    'Antidepressant & Neuroprotective prescription (Đơn thuốc chống trầm cảm SSRI và dưỡng thần kinh)',
+                  category: 'MEDICATION' as const,
+                  amountRequested: medsCost,
+                },
+              ],
+              medsNote: `Chi tiết thuốc điều trị tâm thần kinh: ${medsCost.toLocaleString('vi-VN')} đ`,
+            };
+          },
         },
       ];
 
+      const chosen = faker.helpers.arrayElement(exclusionCandidates);
+      const { items, medsNote } = chosen.generateItems();
+      const totalAmount = items.reduce((sum, it) => sum + it.amountRequested, 0);
+
       return {
         id: 'TC02',
-        label: 'TC-02: Bệnh Loại trừ / Thời gian chờ (Reject)',
+        label: `TC-02: Bệnh Loại trừ [${chosen.code}] (Reject)`,
         policyId: 'POL-GOLD-99882',
         insuredName,
         nationalId,
@@ -244,9 +313,8 @@ export function generateDynamicClaimPreset(presetType: 'TC01' | 'TC02' | 'TC03')
         hospitalName,
         admissionDate,
         dischargeDate,
-        icd10Code: 'K21',
-        icd10Description:
-          'Gastro-esophageal reflux disease (GERD) with esophagitis (Trào ngược dạ dày thực quản)',
+        icd10Code: chosen.code,
+        icd10Description: chosen.desc,
         treatmentType: 'OUTPATIENT',
         claimedAmount: totalAmount,
         items,
@@ -260,10 +328,10 @@ export function generateDynamicClaimPreset(presetType: 'TC01' | 'TC02' | 'TC03')
           },
           {
             id: 'doc-2',
-            docType: 'Bảng kê tiền thuốc',
+            docType: 'Bảng kê tiền thuốc & dịch vụ',
             fileName: `don_thuoc_va_bang_ke_${slug}.pdf`,
             status: 'VALID',
-            note: `Chi tiết thuốc điều trị GERD: ${medsCost.toLocaleString('vi-VN')} đ`,
+            note: medsNote,
           },
           {
             id: 'doc-3',

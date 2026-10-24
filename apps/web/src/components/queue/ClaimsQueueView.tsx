@@ -44,7 +44,6 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
   ).length;
   const approvedClaims = claims.filter(c => c.status === 'APPROVED');
   const approvedCount = approvedClaims.length;
-  const rejectedCount = claims.filter(c => c.status === 'REJECTED').length;
   const totalPayout = approvedClaims.reduce(
     (acc, c) => acc + (c.aiSuggestedAmount || c.claimedAmount),
     0,
@@ -52,8 +51,21 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
   const urgentCount = claims.filter(
     c => (c.status === 'SUBMITTED' || c.status === 'ASSESSING') && c.slaHoursLeft < 4,
   ).length;
+  // Hồ sơ đã có kết luận cuối cùng (Duyệt, Từ chối hoặc Ghi đè)
+  const resolvedClaims = claims.filter(
+    c => c.status === 'APPROVED' || c.status === 'REJECTED' || c.status === 'OVERRIDDEN',
+  );
+
+  // Tỷ lệ STP (Straight-Through Processing): Quyết định của người trùng khớp hoàn toàn với đề xuất AI (không bị OVERRIDDEN)
+  const stpClaimsCount = resolvedClaims.filter(c => {
+    if (c.status === 'OVERRIDDEN') return false;
+    if (c.status === 'APPROVED' && c.aiRecommendation === 'APPROVE') return true;
+    if (c.status === 'REJECTED' && c.aiRecommendation === 'REJECT') return true;
+    return false;
+  }).length;
+
   const stpRate =
-    claims.length > 0 ? Math.round(((approvedCount + rejectedCount) / claims.length) * 100) : 80;
+    resolvedClaims.length > 0 ? Math.round((stpClaimsCount / resolvedClaims.length) * 100) : 0;
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
@@ -146,7 +158,11 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
             </span>
             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-teal-700 font-medium">
               <Zap className="h-3.5 w-3.5 text-amber-500" />
-              <span>Quy trình 4 bước</span>
+              <span>
+                {resolvedClaims.length > 0
+                  ? `${stpClaimsCount}/${resolvedClaims.length} hồ sơ khớp AI`
+                  : 'Chờ kết quả thẩm định'}
+              </span>
             </div>
           </div>
           <div className="p-3 rounded-xl bg-teal-50 text-teal-700">

@@ -1,8 +1,8 @@
 # Papaya Claims Workstation - Full Conversation History
 
 - **Conversation ID:** `e09fbaaa-71f6-4177-b164-2c02dce92f35`
-- **Total Turns:** 122
-- **Exported At:** 2026-10-24 12:55:28
+- **Total Turns:** 123
+- **Exported At:** 2026-10-24 12:58:28
 - **Workspace:** `/Users/tranquocdung/Projects/papaya-asign`
 
 ---
@@ -7730,6 +7730,56 @@ Toàn bộ dự án đã sẵn sàng bàn giao chính thức trên nhánh `main`
 ### 👤 Người Dùng (User)
 
 @[/Users/tranquocdung/Projects/papaya-asign/README.md] Tôi thấy dường như chưa cập nhật hướng dẫn sử dụng cho người chấm bài
+
+> 🛠️ **Công cụ & Thao tác đã thực hiện:** `tool`, `VIEW_FILE`, `RUN_COMMAND`
+
+### 🤖 Trợ Lý Antigravity (Assistant)
+
+Đã cập nhật toàn diện file [README.md](file:///Users/tranquocdung/Projects/papaya-asign/README.md) thành một **Tài liệu Hướng dẫn Nghiệp vụ & Đánh giá Chi tiết (Evaluator Walkthrough Guide)** dành riêng cho người chấm bài tại **Papaya Insurtech**.
+
+---
+
+### Các Nội Dung Trọng Tâm Đã Bổ Sung Trong [README.md](file:///Users/tranquocdung/Projects/papaya-asign/README.md):
+
+1. **Khởi chạy Nhanh 1-Click (Quickstart):**
+   - Hướng dẫn chạy bằng `pnpm` (5 bước chuẩn bị môi trường, nạp database và chạy dev).
+   - Hướng dẫn chạy đóng gói độc lập qua `docker compose up --build`.
+
+2. **Kịch Bản Đánh Giá Từng Bước Cho 3 Ca Benchmark (Step-by-step Evaluator Walkthrough):**
+   - **Ca 1: TC-01 — Cấp cứu Ruột thừa (`K35` - Approve):** Hướng dẫn người chấm tạo hồ sơ ngẫu nhiên bằng Faker, quan sát luồng SSE 4 bước phê duyệt tự động, kiểm tra thẻ chiết tính đồng chi trả (20% phẫu thuật, 10% nội trú) và hạn mức năm còn lại.
+   - **Ca 2: TC-02 — Bệnh Loại trừ (`K21`, `Z41.1`, `F32` - Reject):** Hướng dẫn quan sát cơ chế bắt điểm loại trừ tại Bước 2 (`lookupPolicyStep`), ngăn chặn giải ngân sai lệch, nhấp vào **Policy Citation Pill** màu đỏ để trượt ra **Policy Browser Drawer** tra cứu điều khoản.
+   - **Ca 3: TC-03 — Thiếu hóa đơn VAT / Bảng kê mờ (Request Info):** Hướng dẫn quan sát cờ cảnh báo thiếu chứng từ tại Bước 1 (`verifyDocumentStep`), thao tác tải lên hóa đơn VAT bổ sung để AI tự động thẩm định lại.
+
+3. **Hướng dẫn Kiểm tra Bộ Tính năng Chuyên sâu trên Workstation:**
+   - Trạm làm việc 2 cột **Dual-Pane Workstation**.
+   - Trực tiếp chat hỏi đáp nghiệp vụ với **Mastra Assessor Agent**.
+   - Kiểm tra bộ lọc bảo vệ dữ liệu riêng tư **PII Masking Guardrail** (che giấu CCCD, số điện thoại).
+   - Cơ chế ghi đè quyết định của chuyên viên (**Manual Override Modal**) và lưu vết kiểm toán (**Audit Trail Drawer**).
+
+4. **Kiểm thử & Đảm bảo Chất lượng Phần mềm (Quality Engineering):**
+   - Hướng dẫn chạy `pnpm test` với **17 test suites (91/91 tests PASSED)**.
+   - Bảng phân loại các bài test thuật toán chuyên sâu: BVA (Boundary Value Analysis), MC/DC Decision Coverage, Cyclomatic Paths (McCabe), Pairwise Matrix.
+
+5. **Chỉ mục Artifacts Nộp bài (Submission Deliverables):**
+   - Dẫn link trực tiếp tới [submission/EVALUATION_REPORT.md](file:///Users/tranquocdung/Projects/papaya-asign/submission/EVALUATION_REPORT.md).
+   - Dẫn link tới [submission/TOOL_CALL_LOGS.json](file:///Users/tranquocdung/Projects/papaya-asign/submission/TOOL_CALL_LOGS.json).
+   - Dẫn link tới [conversations/LATEST_CONVERSATION.md](file:///Users/tranquocdung/Projects/papaya-asign/conversations/LATEST_CONVERSATION.md).
+
+---
+
+### Trạng thái Git Đã Đồng Bộ:
+- **`main`**: Commit [bb50f48](https://github.com/dungtranl-ageon/papaya-asign/commit/bb50f48) (`docs: add comprehensive evaluator walkthrough and evaluation guide in README`) -> *Đã push lên remote*.
+- **`develop`**: Đồng bộ hoàn toàn với `main` (`c2d103e..bb50f48`) -> *Đã push lên remote*.
+- **`feature/frontend-workstation-copilot`**: Đồng bộ hoàn toàn với `main` -> *Đã push lên remote*.
+- Working tree: `clean` (100% sạch sẽ và sẵn sàng chấm điểm).
+
+---
+
+## Turn 123 · `2026-10-24T05:56:38Z`
+
+### 👤 Người Dùng (User)
+
+Thiếu hướng dẫn sử dụng, cấu hình LLM, ...
 
 > 🛠️ **Công cụ & Thao tác đã thực hiện:** `tool`, `VIEW_FILE`, `RUN_COMMAND`
 

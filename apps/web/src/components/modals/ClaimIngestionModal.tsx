@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   PlusCircle,
@@ -17,6 +17,7 @@ import {
 import { ClaimStatus } from '@papaya/shared';
 import { useWorkstationStore } from '@/store';
 import { CLAIM_PRESETS } from '../../fixtures/claim-presets';
+import { generateDynamicClaimPreset } from '../../fixtures/claim-faker-generator';
 
 export interface IngestedClaimData {
   id: string;
@@ -82,11 +83,9 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
   // Documents attached
   const [documents, setDocuments] = useState(initialPreset.documents);
 
-  if (!isOpen) return null;
-
   const loadPreset = (preset: 'TC01' | 'TC02' | 'TC03') => {
     setSelectedPreset(preset);
-    const p = CLAIM_PRESETS[preset];
+    const p = generateDynamicClaimPreset(preset);
     if (p) {
       setPolicyId(p.policyId);
       setInsuredName(p.insuredName);
@@ -104,6 +103,14 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
       setDocuments(p.documents);
     }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      loadPreset('TC01');
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const handleClaimedAmountChange = (newAmount: number) => {
     setClaimedAmount(newAmount);
@@ -268,7 +275,7 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
         {/* Quick Presets Bar */}
         <div className="px-6 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2 shrink-0">
           <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-            <Zap className="h-3.5 w-3.5 text-amber-500" /> Chọn kịch bản mẫu nhanh:
+            <Zap className="h-3.5 w-3.5 text-amber-500" /> Kịch bản nhanh (sinh dữ liệu động):
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -580,7 +587,7 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
             <Sparkles className="h-3.5 w-3.5 text-teal-600" />
-            <span>Mastra Engine tự động kích hoạt workflow 4 bước ngay sau khi bấm tạo</span>
+            <span>AI Engine tự động kích hoạt workflow 4 bước ngay sau khi bấm tạo</span>
           </div>
 
           <div className="flex items-center gap-2">

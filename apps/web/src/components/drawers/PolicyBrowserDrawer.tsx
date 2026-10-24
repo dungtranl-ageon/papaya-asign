@@ -153,8 +153,9 @@ export function PolicyBrowserDrawer({
                     <span>Ứng dụng trong Thẩm định AI:</span>
                   </span>
                   <p>
-                    Quy tắc này được nạp vào vector embeddings của Mastra RAG Tool (
-                    <code>lookupPolicy</code>) để tự động đối chiếu mã ICD-10 và hóa đơn bồi thường.
+                    Quy tắc này được nạp trực tiếp vào ngữ cảnh thẩm định của công cụ (
+                    <code>lookupPolicy</code>) để tự động đối chiếu mã ICD-10 và kiểm tra quy tắc
+                    loại trừ bồi thường.
                   </p>
                 </div>
               </div>

@@ -43,6 +43,7 @@ data/raw_large/
 .DS_Store
 Thumbs.db
 *.log
+conversations/*.jsonl
 scratch/
 .idea/
 .vscode/*

@@ -8,3 +8,4 @@ coverage
 *.sqlite
 pnpm-lock.yaml
 requirements/
+conversations/

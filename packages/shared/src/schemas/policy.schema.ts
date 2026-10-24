@@ -6,8 +6,8 @@ export const BenefitRuleSchema = z.object({
   maxLimitPerYear: z.number().nonnegative(),
   copayRate: z.number().min(0).max(1), // e.g. 0.20 for 20%
   subLimitPerDay: z.number().nonnegative().optional(),
-  waitingPeriodDays: z.number().int().nonnegative().default(0),
-  requiresPreAuth: z.boolean().default(false),
+  waitingPeriodDays: z.number().int().nonnegative().optional().default(0),
+  requiresPreAuth: z.boolean().optional().default(false),
 });
 
 export const PolicySchema = z.object({

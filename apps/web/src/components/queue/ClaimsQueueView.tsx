@@ -15,27 +15,9 @@ import {
   ShieldAlert,
   Zap,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
-import { ClaimStatus } from '@papaya/shared';
-
-export interface QueueClaimItem {
-  id: string;
-  policyId: string;
-  insuredName: string;
-  nationalId: string;
-  hospitalName: string;
-  icd10Code: string;
-  icd10Description: string;
-  treatmentType: string;
-  claimedAmount: number;
-  aiSuggestedAmount?: number;
-  aiRecommendation: 'APPROVE' | 'REJECT' | 'NEED_MORE_INFO' | 'PENDING';
-  aiConfidence: number;
-  status: ClaimStatus;
-  slaHoursLeft: number;
-  submittedAt: string;
-  testCaseLabel?: string;
-}
+import { useWorkstationStore } from '@/store';
 
 interface ClaimsQueueViewProps {
   onSelectClaim: (claimId: string) => void;
@@ -46,84 +28,15 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [slaFilter, setSlaFilter] = useState<string>('ALL');
-  const [claims, setClaims] = useState<QueueClaimItem[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const { claimsQueue, isQueueLoading, queueError, fetchClaimsQueue } = useWorkstationStore();
 
   useEffect(() => {
-    let isMounted = true;
-    setLoading(true);
+    fetchClaimsQueue();
+  }, [fetchClaimsQueue]);
 
-    fetch('/api/claims')
-      .then(res => (res.ok ? res.json() : []))
-      .then(
-        (
-          data: Array<{
-            claimId: string;
-            policyNumber: string;
-            patientName: string;
-            nationalId: string;
-            hospitalName: string;
-            diagnosisIcd10: string;
-            diagnosisDescription: string;
-            status: ClaimStatus;
-            totalRequested: number;
-            totalApproved?: number;
-            createdAt: string;
-          }>,
-        ) => {
-          if (!isMounted) return;
-
-          if (Array.isArray(data) && data.length > 0) {
-            const mapped: QueueClaimItem[] = data.map(c => {
-              const isApproved = c.status === 'APPROVED';
-              const isRejected = c.status === 'REJECTED';
-              const isPendingInfo = c.status === 'PENDING_MORE_INFO';
-
-              return {
-                id: c.claimId,
-                policyId: c.policyNumber,
-                insuredName: c.patientName,
-                nationalId: c.nationalId,
-                hospitalName: c.hospitalName,
-                icd10Code: c.diagnosisIcd10,
-                icd10Description: c.diagnosisDescription,
-                treatmentType: c.diagnosisIcd10.startsWith('K35') ? 'Nội trú (Cấp cứu)' : 'Nội trú',
-                claimedAmount: c.totalRequested,
-                aiSuggestedAmount:
-                  c.totalApproved || (isApproved ? Math.round(c.totalRequested * 0.8) : 0),
-                aiRecommendation: isApproved
-                  ? 'APPROVE'
-                  : isRejected
-                    ? 'REJECT'
-                    : isPendingInfo
-                      ? 'NEED_MORE_INFO'
-                      : 'APPROVE',
-                aiConfidence: 98.5,
-                status: c.status,
-                slaHoursLeft: c.status === 'SUBMITTED' ? 2.5 : 0,
-                submittedAt: new Date(c.createdAt).toLocaleDateString('vi-VN', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  day: '2-digit',
-                  month: '2-digit',
-                }),
-              };
-            });
-            setClaims(mapped);
-          }
-        },
-      )
-      .catch(err => {
-        console.error('Failed to fetch claims list from API:', err);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const claims = claimsQueue;
+  const loading = isQueueLoading;
 
   // Compute live metrics dynamically from Database records
   const pendingCount = claims.filter(
@@ -137,7 +50,7 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
     0,
   );
   const urgentCount = claims.filter(
-    c => (c.status === 'SUBMITTED' || c.status === 'ASSESSING') && c.icd10Code.startsWith('K35'),
+    c => (c.status === 'SUBMITTED' || c.status === 'ASSESSING') && c.slaHoursLeft < 4,
   ).length;
   const stpRate =
     claims.length > 0 ? Math.round(((approvedCount + rejectedCount) / claims.length) * 100) : 80;
@@ -165,6 +78,23 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
 
   return (
     <div className="space-y-6">
+      {/* Queue Error Alert */}
+      {queueError && (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs flex items-center justify-between shadow-2xs">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
+            <span className="font-semibold">{queueError}</span>
+          </div>
+          <button
+            onClick={() => fetchClaimsQueue()}
+            className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span>Thử nạp lại</span>
+          </button>
+        </div>
+      )}
+
       {/* 4 KPI Metrics Cards (Computed dynamically from Database) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1 */}
@@ -337,6 +267,7 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
                 <th className="py-3 px-4">Chẩn đoán & Cơ sở Y tế</th>
                 <th className="py-3 px-4">Chi phí Yêu cầu</th>
                 <th className="py-3 px-4">Đề xuất AI Copilot</th>
+                <th className="py-3 px-4">Quyết định HITL</th>
                 <th className="py-3 px-4">Hạn SLA</th>
                 <th className="py-3 px-4 text-right">Thao tác</th>
               </tr>
@@ -344,7 +275,7 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
                       <span className="text-xs font-semibold">
@@ -355,7 +286,7 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
                 </tr>
               ) : filteredClaims.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
+                  <td colSpan={8} className="py-12 text-center text-slate-400 text-xs">
                     Không tìm thấy hồ sơ nào phù hợp với bộ lọc hiện tại.
                   </td>
                 </tr>
@@ -434,17 +365,54 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-800 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
                             <ShieldAlert className="h-3 w-3 text-rose-600" /> Đề xuất Từ chối
                           </span>
-                          <div className="text-[10px] text-rose-600 font-medium">
-                            Chạm thời gian chờ
+                          <div
+                            className="text-[10px] text-rose-600 font-medium truncate max-w-[150px]"
+                            title={claim.aiReason || claim.icd10Description}
+                          >
+                            {claim.aiReason || claim.icd10Description || 'Từ chối theo điều khoản'}
                           </div>
                         </div>
-                      ) : (
+                      ) : claim.aiRecommendation === 'NEED_MORE_INFO' ? (
                         <div className="space-y-0.5">
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                             <AlertTriangle className="h-3 w-3 text-amber-600" /> Cần bổ sung
                           </span>
-                          <div className="text-[10px] text-slate-500">Mờ bảng kê</div>
+                          <div
+                            className="text-[10px] text-amber-700 font-medium truncate max-w-[150px]"
+                            title={claim.aiReason}
+                          >
+                            {claim.aiReason || 'Yêu cầu bổ sung chứng từ'}
+                          </div>
                         </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                          <Clock className="h-3 w-3 text-slate-400" /> Chờ AI phân tích
+                        </span>
+                      )}
+                    </td>
+
+                    {/* HITL Decision Column */}
+                    <td className="py-3.5 px-4">
+                      {claim.hitlDecision === 'APPROVED' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-300">
+                          <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Đã duyệt
+                        </span>
+                      ) : claim.hitlDecision === 'OVERRIDDEN' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-800 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-300">
+                          <Zap className="h-3 w-3 text-purple-600" /> Ghi đè HITL
+                        </span>
+                      ) : claim.hitlDecision === 'REJECTED' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-800 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-300">
+                          <ShieldAlert className="h-3 w-3 text-rose-600" /> Từ chối
+                        </span>
+                      ) : claim.hitlDecision === 'PENDING_MORE_INFO' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-300">
+                          <AlertTriangle className="h-3 w-3 text-amber-600" /> Bổ sung
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                          <Clock className="h-3 w-3 text-slate-400" /> Chưa duyệt
+                        </span>
                       )}
                     </td>
 

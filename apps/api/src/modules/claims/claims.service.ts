@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Claim, AssessmentReport } from '@papaya/shared';
+import { Claim, AssessmentReport, ClaimDocument } from '@papaya/shared';
 import { PoliciesService } from '../policies/policies.service';
 import { MastraService, SseEventPayload } from '../mastra/mastra.service';
 import { AuditService, AuditLogItem } from '../audit/audit.service';
@@ -53,6 +53,23 @@ export interface CreateClaimDto {
   }>;
 }
 
+export interface UpdateClaimDto {
+  totalRequested?: number;
+  patientName?: string;
+  nationalId?: string;
+  hospitalName?: string;
+  admissionDate?: string;
+  dischargeDate?: string;
+  diagnosisIcd10?: string;
+  diagnosisDescription?: string;
+  items?: Array<{
+    itemId?: string;
+    description: string;
+    category: 'INPATIENT' | 'OUTPATIENT' | 'SURGERY' | 'MEDICATION' | 'LABORATORY' | 'DENTAL';
+    amountRequested: number;
+  }>;
+}
+
 @Injectable()
 export class ClaimsService {
   private readonly logger = new Logger(ClaimsService.name);
@@ -76,6 +93,12 @@ export class ClaimsService {
     try {
       const records = await this.prisma.claim.findMany({
         orderBy: { createdAt: 'desc' },
+        include: {
+          assessments: {
+            orderBy: { assessedAt: 'desc' },
+            take: 1,
+          },
+        },
       });
       if (records.length > 0) {
         return records.map(r => this.mapDbToClaim(r));
@@ -104,6 +127,12 @@ export class ClaimsService {
     try {
       const record = await this.prisma.claim.findUnique({
         where: { claimId },
+        include: {
+          assessments: {
+            orderBy: { assessedAt: 'desc' },
+            take: 1,
+          },
+        },
       });
       if (record) {
         return this.mapDbToClaim(record);
@@ -125,12 +154,61 @@ export class ClaimsService {
     const generatedId =
       dto.claimId || `CLM-2026-${String(Math.floor(Math.random() * 90000) + 10000)}`;
 
-    const items = (dto.items || []).map((it, idx) => ({
-      itemId: it.itemId || `ITM-${idx + 1}`,
-      description: it.description,
-      category: it.category,
-      amountRequested: it.amountRequested,
-    }));
+    let normalizedTotalRequested = dto.totalRequested;
+    let items: Array<{
+      itemId: string;
+      description: string;
+      category: any;
+      amountRequested: number;
+    }> = [];
+
+    if (dto.items && dto.items.length > 0) {
+      const dtoItems = dto.items;
+      const rawSum = dtoItems.reduce((acc, it) => acc + (it.amountRequested || 0), 0);
+      if (normalizedTotalRequested === undefined || normalizedTotalRequested <= 0) {
+        normalizedTotalRequested = rawSum;
+      }
+
+      if (rawSum > 0 && normalizedTotalRequested > 0 && rawSum !== normalizedTotalRequested) {
+        const ratio = normalizedTotalRequested / rawSum;
+        let running = 0;
+        items = dtoItems.map((it, idx) => {
+          if (idx === dtoItems.length - 1) {
+            return {
+              itemId: it.itemId || `ITM-${idx + 1}`,
+              description: it.description,
+              category: it.category,
+              amountRequested: Math.max(0, normalizedTotalRequested - running),
+            };
+          }
+          const scaled = Math.round(it.amountRequested * ratio);
+          running += scaled;
+          return {
+            itemId: it.itemId || `ITM-${idx + 1}`,
+            description: it.description,
+            category: it.category,
+            amountRequested: scaled,
+          };
+        });
+      } else {
+        items = dtoItems.map((it, idx) => ({
+          itemId: it.itemId || `ITM-${idx + 1}`,
+          description: it.description,
+          category: it.category,
+          amountRequested: it.amountRequested,
+        }));
+      }
+    } else {
+      normalizedTotalRequested = normalizedTotalRequested || 0;
+      items = [
+        {
+          itemId: 'ITM-1',
+          description: dto.diagnosisDescription || 'Chi phí khám chữa bệnh theo hồ sơ yêu cầu',
+          category: 'INPATIENT' as const,
+          amountRequested: normalizedTotalRequested,
+        },
+      ];
+    }
 
     const documents = (dto.documents || []).map((doc, idx) => ({
       docId: doc.docId || `DOC-${idx + 1}`,
@@ -153,7 +231,7 @@ export class ClaimsService {
         diagnosisIcd10: dto.diagnosisIcd10,
         diagnosisDescription: dto.diagnosisDescription,
         status: 'SUBMITTED',
-        totalRequested: dto.totalRequested,
+        totalRequested: normalizedTotalRequested,
         itemsJson: JSON.stringify(items),
         documentsJson: JSON.stringify(documents),
       },
@@ -165,13 +243,100 @@ export class ClaimsService {
       actorRole: 'CUSTOMER',
       actionType: 'CLAIM_SUBMISSION',
       newValue: JSON.stringify({
-        totalRequested: dto.totalRequested,
+        totalRequested: normalizedTotalRequested,
         documentsCount: documents.length,
       }),
       reason: 'Khách hàng khởi tạo hồ sơ yêu cầu bồi thường trực tuyến thành công.',
     });
 
     return this.mapDbToClaim(created);
+  }
+
+  async updateClaim(claimId: string, dto: UpdateClaimDto): Promise<Claim> {
+    const current = await this.getClaimById(claimId);
+
+    const dataToUpdate: Record<string, unknown> = {};
+
+    if (dto.patientName !== undefined) dataToUpdate.patientName = dto.patientName;
+    if (dto.nationalId !== undefined) dataToUpdate.nationalId = dto.nationalId;
+    if (dto.hospitalName !== undefined) dataToUpdate.hospitalName = dto.hospitalName;
+    if (dto.admissionDate !== undefined) dataToUpdate.admissionDate = new Date(dto.admissionDate);
+    if (dto.dischargeDate !== undefined) dataToUpdate.dischargeDate = new Date(dto.dischargeDate);
+    if (dto.diagnosisIcd10 !== undefined) dataToUpdate.diagnosisIcd10 = dto.diagnosisIcd10;
+    if (dto.diagnosisDescription !== undefined)
+      dataToUpdate.diagnosisDescription = dto.diagnosisDescription;
+
+    if (dto.items && dto.items.length > 0) {
+      const items = dto.items.map((it, idx) => ({
+        itemId: it.itemId || `ITM-${idx + 1}`,
+        description: it.description,
+        category: it.category,
+        amountRequested: it.amountRequested,
+      }));
+      dataToUpdate.itemsJson = JSON.stringify(items);
+      dataToUpdate.totalRequested =
+        dto.totalRequested !== undefined
+          ? dto.totalRequested
+          : items.reduce((sum, i) => sum + i.amountRequested, 0);
+    } else if (dto.totalRequested !== undefined) {
+      dataToUpdate.totalRequested = dto.totalRequested;
+      // Also sync existing items to match the new totalRequested
+      const currentItems = current.items || [];
+      if (currentItems.length <= 1) {
+        dataToUpdate.itemsJson = JSON.stringify([
+          {
+            itemId: currentItems[0]?.itemId || 'ITM-1',
+            description:
+              currentItems[0]?.description ||
+              dto.diagnosisDescription ||
+              current.diagnosisDescription,
+            category: currentItems[0]?.category || 'INPATIENT',
+            amountRequested: dto.totalRequested,
+          },
+        ]);
+      } else {
+        const oldSum = currentItems.reduce((acc, it) => acc + (it.amountRequested || 0), 0);
+        const ratio = oldSum > 0 ? dto.totalRequested / oldSum : 1;
+        let running = 0;
+        const newItems = currentItems.map((it, idx) => {
+          if (idx === currentItems.length - 1) {
+            return { ...it, amountRequested: Math.max(0, (dto.totalRequested || 0) - running) };
+          }
+          const scaled = Math.round(it.amountRequested * ratio);
+          running += scaled;
+          return { ...it, amountRequested: scaled };
+        });
+        dataToUpdate.itemsJson = JSON.stringify(newItems);
+      }
+    }
+
+    const updated = await this.prisma.claim.update({
+      where: { claimId },
+      data: dataToUpdate,
+    });
+
+    await this.auditService.logAction({
+      claimId,
+      actorId: 'ASSESSOR_PORTAL',
+      actorRole: 'ASSESSOR',
+      actionType: 'UPDATE_CLAIM_DETAILS',
+      oldValue: JSON.stringify({
+        totalRequested: current.totalRequested,
+        hospitalName: current.hospitalName,
+      }),
+      newValue: JSON.stringify(dataToUpdate),
+      reason:
+        'Chuyên viên cập nhật thông tin hồ sơ bồi thường (Số tiền yêu cầu / Chi tiết lâm sàng).',
+    });
+
+    // Re-assess automatically to update assessment report
+    try {
+      await this.assessClaim(claimId);
+    } catch (err) {
+      this.logger.warn(`Failed to auto re-assess claim ${claimId} after update:`, err);
+    }
+
+    return this.mapDbToClaim(updated);
   }
 
   async updateClaimStatus(claimId: string, dto: UpdateClaimStatusDto): Promise<Claim> {
@@ -201,6 +366,68 @@ export class ClaimsService {
         notes: dto.overrideNotes || dto.reason,
       }),
       reason: dto.reason || dto.overrideNotes || `Trạng thái hồ sơ chuyển sang ${dto.status}`,
+    });
+
+    return this.mapDbToClaim(updated);
+  }
+
+  async addDocument(
+    claimId: string,
+    doc: {
+      docType: ClaimDocument['docType'] | string;
+      fileName: string;
+      status?: ClaimDocument['status'];
+      notes?: string;
+    },
+  ): Promise<Claim> {
+    const claim = await this.getClaimById(claimId);
+    const existingDocs: ClaimDocument[] = claim.documents || [];
+    const newDocId = `DOC-${existingDocs.length + 1}-${Date.now().toString().slice(-4)}`;
+    const newDoc: ClaimDocument = {
+      docId: newDocId,
+      docType: doc.docType as ClaimDocument['docType'],
+      fileName: doc.fileName,
+      uploadedAt: new Date().toISOString(),
+      status: doc.status || 'VALID',
+      notes: doc.notes || 'Chứng từ bổ sung mới nạp',
+    };
+
+    // If an existing document with the same docType was INVALID, update or replace it
+    let updatedDocs: ClaimDocument[] = existingDocs.map(d => {
+      if (d.docType === doc.docType && d.status === 'INVALID') {
+        return {
+          ...d,
+          fileName: doc.fileName,
+          uploadedAt: new Date().toISOString(),
+          status: doc.status || 'VALID',
+          notes: doc.notes || 'Đã nộp bổ sung bản mới thay thế bản mờ/không hợp lệ',
+        };
+      }
+      return d;
+    });
+
+    const isExistingReplaced = existingDocs.some(
+      d => d.docType === doc.docType && d.status === 'INVALID',
+    );
+    if (!isExistingReplaced) {
+      updatedDocs = [...updatedDocs, newDoc];
+    }
+
+    const updated = await this.prisma.claim.update({
+      where: { claimId },
+      data: {
+        documentsJson: JSON.stringify(updatedDocs),
+        status: 'ASSESSING',
+      },
+    });
+
+    await this.auditService.logAction({
+      claimId,
+      actorId: 'ASSESSOR_PORTAL',
+      actorRole: 'ASSESSOR',
+      actionType: 'ADD_ADDITIONAL_DOCUMENT',
+      newValue: JSON.stringify(newDoc),
+      reason: `Nạp bổ sung chứng từ: ${doc.fileName} (${doc.docType})`,
     });
 
     return this.mapDbToClaim(updated);
@@ -332,10 +559,13 @@ export class ClaimsService {
       throw new NotFoundException(`Policy ${claim.policyNumber} not found`);
     }
 
+    const assessmentReport = (await this.getLatestAssessment(claimId)) || undefined;
+
     return this.mastraService.chatWithCopilot({
       query,
       claim,
       policy,
+      assessmentReport,
     });
   }
 
@@ -356,6 +586,13 @@ export class ClaimsService {
     documentsJson: string;
     createdAt: Date;
     updatedAt: Date;
+    assessments?: Array<{
+      assessmentId: string;
+      finalRecommendation: string;
+      confidenceScore: number;
+      totalPayable: number;
+      executiveSummary?: string;
+    }>;
   }): Claim {
     let items = [];
     let documents = [];
@@ -371,6 +608,18 @@ export class ClaimsService {
       documents = [];
     }
 
+    const asm = r.assessments && r.assessments.length > 0 ? r.assessments[0] : undefined;
+    const latestAssessment = asm
+      ? {
+          assessmentId: asm.assessmentId,
+          finalRecommendation: asm.finalRecommendation as
+            'APPROVE' | 'REJECT' | 'REQUEST_MORE_INFO' | 'MANUAL_ESCALATION',
+          confidenceScore: asm.confidenceScore,
+          totalPayable: asm.totalPayable,
+          executiveSummary: asm.executiveSummary,
+        }
+      : undefined;
+
     return {
       claimId: r.claimId,
       policyNumber: r.policyNumber,
@@ -385,6 +634,7 @@ export class ClaimsService {
         'SUBMITTED' | 'ASSESSING' | 'PENDING_MORE_INFO' | 'APPROVED' | 'REJECTED' | 'OVERRIDDEN',
       totalRequested: r.totalRequested,
       totalApproved: r.totalApproved ?? undefined,
+      latestAssessment,
       items,
       documents,
       createdAt: r.createdAt.toISOString(),

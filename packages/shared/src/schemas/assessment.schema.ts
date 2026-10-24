@@ -8,7 +8,7 @@ export const AssessmentStepResultSchema = z.object({
     'CALCULATE_BENEFIT',
     'GENERATE_REPORT',
   ]),
-  status: z.enum(['PASSED', 'FAILED', 'WARNING', 'ACTION_REQUIRED']),
+  status: z.enum(['PASSED', 'FAILED', 'WARNING', 'ACTION_REQUIRED', 'PENDING']),
   score: z.number().min(0).max(100).optional(),
   message: z.string(),
   details: z.record(z.string(), z.unknown()),

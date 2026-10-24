@@ -45,25 +45,6 @@ export function ManualOverrideModal({
       return;
     }
 
-    if (claimId) {
-      try {
-        await fetch(`/api/claims/${claimId}/status`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: 'OVERRIDDEN',
-            totalApproved: overriddenAmount,
-            actorId: 'ASSESSOR',
-            actorRole: 'ASSESSOR',
-            overrideNotes: auditNote,
-            reason: `Chuyên viên ghi đè số tiền duyệt (${formatCurrency(originalAmount)} -> ${formatCurrency(overriddenAmount)}). Lý do: ${overrideReason}`,
-          }),
-        });
-      } catch (err) {
-        console.error('Failed to update override status on server:', err);
-      }
-    }
-
     onConfirm({
       originalAmount,
       overriddenAmount,

@@ -15,6 +15,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { ClaimStatus } from '@papaya/shared';
+import { useWorkstationStore } from '@/store';
 import { CLAIM_PRESETS } from '../../fixtures/claim-presets';
 
 export interface IngestedClaimData {
@@ -51,6 +52,9 @@ interface ClaimIngestionModalProps {
 
 export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestionModalProps) {
   const initialPreset = CLAIM_PRESETS.TC01;
+  const { createClaim } = useWorkstationStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Preset selector
   const [selectedPreset, setSelectedPreset] = useState<'TC01' | 'TC02' | 'TC03' | 'CUSTOM'>('TC01');
@@ -73,6 +77,7 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
   );
 
   const [claimedAmount, setClaimedAmount] = useState<number>(initialPreset.claimedAmount);
+  const [items, setItems] = useState(initialPreset.items || []);
 
   // Documents attached
   const [documents, setDocuments] = useState(initialPreset.documents);
@@ -95,65 +100,128 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
       setIcd10Description(p.icd10Description);
       setTreatmentType(p.treatmentType);
       setClaimedAmount(p.claimedAmount);
+      setItems(p.items || []);
       setDocuments(p.documents);
+    }
+  };
+
+  const handleClaimedAmountChange = (newAmount: number) => {
+    setClaimedAmount(newAmount);
+    if (items.length <= 1) {
+      setItems([
+        {
+          itemId: items[0]?.itemId || 'ITM-001',
+          description: items[0]?.description || icd10Description || 'Chi phí điều trị theo hóa đơn',
+          category: (items[0]?.category ||
+            (treatmentType === 'OUTPATIENT' ? 'OUTPATIENT' : 'INPATIENT')) as any,
+          amountRequested: newAmount,
+        },
+      ]);
+    } else {
+      const oldTotal = items.reduce((sum, it) => sum + (it.amountRequested || 0), 0);
+      const ratio = oldTotal > 0 ? newAmount / oldTotal : 1;
+      let running = 0;
+      const newItems = items.map((it, idx) => {
+        if (idx === items.length - 1) {
+          return { ...it, amountRequested: Math.max(0, newAmount - running) };
+        }
+        const scaled = Math.round(it.amountRequested * ratio);
+        running += scaled;
+        return { ...it, amountRequested: scaled };
+      });
+      setItems(newItems);
     }
   };
 
   const handleCreate = async () => {
     const generatedId = `CLM-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+    setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
-      await fetch('/api/claims', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          claimId: generatedId,
-          policyNumber: policyId,
-          patientName: insuredName,
-          nationalId,
-          hospitalName,
-          admissionDate: new Date(admissionDate).toISOString(),
-          dischargeDate: new Date(dischargeDate).toISOString(),
-          diagnosisIcd10: icd10Code,
-          diagnosisDescription: icd10Description,
-          totalRequested: claimedAmount,
-          documents: documents.map(d => ({
-            docType: d.docType.includes('Giấy')
+      let claimItems = items;
+      const itemsSum = items.reduce((sum, it) => sum + (it.amountRequested || 0), 0);
+      if (items.length === 0 || itemsSum !== claimedAmount) {
+        if (items.length <= 1) {
+          claimItems = [
+            {
+              itemId: 'ITM-001',
+              description: icd10Description || 'Chi phí điều trị theo hóa đơn',
+              category: (treatmentType === 'OUTPATIENT' ? 'OUTPATIENT' : 'INPATIENT') as any,
+              amountRequested: claimedAmount,
+            },
+          ];
+        } else {
+          const ratio = claimedAmount / (itemsSum || 1);
+          let running = 0;
+          claimItems = items.map((it, idx) => {
+            if (idx === items.length - 1) {
+              return { ...it, amountRequested: Math.max(0, claimedAmount - running) };
+            }
+            const scaled = Math.round(it.amountRequested * ratio);
+            running += scaled;
+            return { ...it, amountRequested: scaled };
+          });
+        }
+      }
+
+      const created = await createClaim({
+        claimId: generatedId,
+        policyNumber: policyId,
+        patientName: insuredName,
+        nationalId,
+        hospitalName,
+        admissionDate: new Date(admissionDate).toISOString(),
+        dischargeDate: new Date(dischargeDate).toISOString(),
+        diagnosisIcd10: icd10Code,
+        diagnosisDescription: icd10Description,
+        totalRequested: claimedAmount,
+        items: claimItems,
+        documents: documents.map(d => ({
+          docType:
+            d.docType.includes('Giấy') ||
+            d.docType.includes('Sổ') ||
+            d.fileName.toLowerCase().includes('so_kham') ||
+            d.fileName.toLowerCase().includes('giay_ra_vien')
               ? 'HOSPITAL_DISCHARGE'
-              : d.docType.includes('Hóa đơn')
+              : d.docType.includes('Hóa đơn') || d.fileName.toLowerCase().includes('vat')
                 ? 'VAT_INVOICE'
                 : 'DETAILED_INVOICE',
-            fileName: d.fileName,
-            status: d.status,
-            notes: d.note,
-          })),
-        }),
+          fileName: d.fileName,
+          status: d.status === 'PENDING' ? 'VALID' : d.status,
+          notes: d.note,
+        })),
       });
-    } catch (err) {
-      console.error('Failed to persist ingested claim to DB:', err);
-    }
 
-    const newClaim: IngestedClaimData = {
-      id: generatedId,
-      policyId,
-      insuredName,
-      nationalId,
-      phone,
-      email,
-      hospitalName,
-      hospitalType,
-      admissionDate,
-      dischargeDate,
-      icd10Code,
-      icd10Description,
-      treatmentType,
-      claimedAmount,
-      documents,
-      status: 'SUBMITTED',
-      createdAt: new Date().toISOString(),
-    };
-    onSubmit(newClaim);
-    onClose();
+      const newClaim: IngestedClaimData = {
+        id: created.claimId,
+        policyId: created.policyNumber,
+        insuredName: created.patientName,
+        nationalId: created.nationalId,
+        phone,
+        email,
+        hospitalName: created.hospitalName,
+        hospitalType,
+        admissionDate: created.admissionDate,
+        dischargeDate: created.dischargeDate,
+        icd10Code: created.diagnosisIcd10,
+        icd10Description: created.diagnosisDescription,
+        treatmentType,
+        claimedAmount: created.totalRequested,
+        documents,
+        status: created.status,
+        createdAt: created.createdAt || new Date().toISOString(),
+      };
+
+      onSubmit(newClaim);
+      onClose();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Lỗi kết nối cơ sở dữ liệu khi tạo hồ sơ';
+      setSubmitError(msg);
+      console.error('Failed to create claim:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const addCustomDoc = () => {
@@ -412,7 +480,7 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
                   type="number"
                   step="500000"
                   value={claimedAmount}
-                  onChange={e => setClaimedAmount(Number(e.target.value))}
+                  onChange={e => handleClaimedAmountChange(Number(e.target.value))}
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-bold text-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white"
                 />
               </div>
@@ -500,6 +568,14 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
           </div>
         </div>
 
+        {/* Submit Error Alert */}
+        {submitError && (
+          <div className="mx-6 my-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
+            <span>{submitError}</span>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
@@ -510,16 +586,26 @@ export function ClaimIngestionModal({ isOpen, onClose, onSubmit }: ClaimIngestio
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
             >
               Hủy bỏ (Esc)
             </button>
             <button
               onClick={handleCreate}
-              className="px-5 py-2 text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 active:bg-teal-900 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              disabled={isSubmitting}
+              className="px-5 py-2 text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 active:bg-teal-900 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
-              <Zap className="h-4 w-4 text-amber-400" />
-              <span>Khởi tạo & Kích hoạt Thẩm định AI (Cmd + Enter)</span>
+              {isSubmitting ? (
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Zap className="h-4 w-4 text-amber-400" />
+              )}
+              <span>
+                {isSubmitting
+                  ? 'Đang lưu vào Database...'
+                  : 'Khởi tạo & Kích hoạt Thẩm định AI (Cmd + Enter)'}
+              </span>
             </button>
           </div>
         </div>

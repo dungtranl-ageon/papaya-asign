@@ -17,6 +17,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ClaimDocument } from '@papaya/shared';
 
+interface UploadedMulterFile {
+  originalname: string;
+  buffer: Buffer;
+  mimetype: string;
+  size: number;
+}
+
 @Controller()
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
@@ -24,7 +31,7 @@ export class StorageController {
   @Post('storage/upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadDocument(
-    @UploadedFile() file: any,
+    @UploadedFile() file: UploadedMulterFile,
     @Body('docType') docType?: ClaimDocument['docType'],
   ) {
     if (!file) {

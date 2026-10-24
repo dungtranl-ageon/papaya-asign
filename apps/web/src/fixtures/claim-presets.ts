@@ -1,3 +1,10 @@
+export interface ClaimPresetItem {
+  itemId: string;
+  description: string;
+  category: 'INPATIENT' | 'OUTPATIENT' | 'SURGERY' | 'MEDICATION' | 'LABORATORY' | 'DENTAL';
+  amountRequested: number;
+}
+
 export interface ClaimPreset {
   id: 'TC01' | 'TC02' | 'TC03';
   label: string;
@@ -13,6 +20,7 @@ export interface ClaimPreset {
   icd10Description: string;
   treatmentType: 'INPATIENT' | 'OUTPATIENT' | 'DENTAL';
   claimedAmount: number;
+  items: ClaimPresetItem[];
   documents: Array<{
     id: string;
     docType: string;
@@ -38,6 +46,33 @@ export const CLAIM_PRESETS: Record<'TC01' | 'TC02' | 'TC03', ClaimPreset> = {
     icd10Description: 'Acute appendicitis with localized peritonitis',
     treatmentType: 'INPATIENT',
     claimedAmount: 45000000,
+    items: [
+      {
+        itemId: 'ITM-001',
+        description: 'Laparoscopic Appendectomy (Phẫu thuật nội soi cắt ruột thừa)',
+        category: 'SURGERY',
+        amountRequested: 25000000,
+      },
+      {
+        itemId: 'ITM-002',
+        description: 'Inpatient Room & Board (Phòng nội trú tiêu chuẩn 3 ngày)',
+        category: 'INPATIENT',
+        amountRequested: 9000000,
+      },
+      {
+        itemId: 'ITM-003',
+        description: 'Post-op Antibiotics & Analgesics (Thuốc kháng sinh và giảm đau sau mổ)',
+        category: 'MEDICATION',
+        amountRequested: 6000000,
+      },
+      {
+        itemId: 'ITM-004',
+        description:
+          'Pre-operative Ultrasound & Blood Tests (Siêu âm bụng và xét nghiệm máu cấp cứu)',
+        category: 'LABORATORY',
+        amountRequested: 5000000,
+      },
+    ],
     documents: [
       {
         id: 'doc-1',
@@ -84,6 +119,21 @@ export const CLAIM_PRESETS: Record<'TC01' | 'TC02' | 'TC03', ClaimPreset> = {
     icd10Description: 'Gastro-esophageal reflux disease (GERD) with esophagitis',
     treatmentType: 'OUTPATIENT',
     claimedAmount: 8500000,
+    items: [
+      {
+        itemId: 'ITM-005',
+        description: 'Gastroscopy and biopsy (Nội soi thực quản dạ dày sinh thiết)',
+        category: 'OUTPATIENT',
+        amountRequested: 4500000,
+      },
+      {
+        itemId: 'ITM-006',
+        description:
+          'Prescription PPI and mucosal protectants (Thuốc ức chế bơm proton và bảo vệ niêm mạc)',
+        category: 'MEDICATION',
+        amountRequested: 4000000,
+      },
+    ],
     documents: [
       {
         id: 'doc-1',
@@ -123,6 +173,14 @@ export const CLAIM_PRESETS: Record<'TC01' | 'TC02' | 'TC03', ClaimPreset> = {
     icd10Description: 'Acute bronchitis due to unspecified organism',
     treatmentType: 'INPATIENT',
     claimedAmount: 12000000,
+    items: [
+      {
+        itemId: 'ITM-007',
+        description: 'Khám và điều trị nội trú viêm phế quản cấp',
+        category: 'INPATIENT',
+        amountRequested: 12000000,
+      },
+    ],
     documents: [
       {
         id: 'doc-1',

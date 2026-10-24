@@ -20,11 +20,7 @@ interface AuditTrailDrawerProps {
   claimId?: string;
 }
 
-export function AuditTrailDrawer({
-  isOpen,
-  onClose,
-  claimId = 'CLM-2026-03891',
-}: AuditTrailDrawerProps) {
+export function AuditTrailDrawer({ isOpen, onClose, claimId = '' }: AuditTrailDrawerProps) {
   const [filterType, setFilterType] = useState<'ALL' | 'AI' | 'HUMAN'>('ALL');
 
   const [events, setEvents] = useState<AuditEvent[]>([]);

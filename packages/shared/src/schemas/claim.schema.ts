@@ -61,6 +61,15 @@ export const ClaimSchema = z.object({
   status: ClaimStatusSchema,
   totalRequested: z.number().nonnegative(),
   totalApproved: z.number().nonnegative().optional(),
+  latestAssessment: z
+    .object({
+      assessmentId: z.string(),
+      finalRecommendation: z.enum(['APPROVE', 'REJECT', 'REQUEST_MORE_INFO', 'MANUAL_ESCALATION']),
+      confidenceScore: z.number(),
+      totalPayable: z.number(),
+      executiveSummary: z.string().optional(),
+    })
+    .optional(),
   items: z.array(ClaimItemSchema),
   documents: z.array(ClaimDocumentSchema),
   createdAt: z.string(),

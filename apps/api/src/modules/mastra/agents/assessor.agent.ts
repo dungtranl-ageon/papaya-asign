@@ -6,6 +6,11 @@ import { ASSESSOR_COPILOT_SYSTEM_PROMPT } from '../prompts/assessor.prompts';
 import { PolicyRagService } from '../rag/policy-rag.service';
 import { Claim, Policy, AssessmentReport } from '@papaya/shared';
 import { sanitizeUserFacingText } from '../guardrails/jargon-filter.guardrail';
+import {
+  sanitizePiiFromPrompt,
+  maskNationalId,
+  maskPatientName,
+} from '../guardrails/pii-masker.guardrail';
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -64,6 +69,8 @@ export function getMastraLanguageModel() {
   return provider(modelName);
 }
 
+import { copilotApiTools } from '../tools/copilot-api.tools';
+
 /**
  * Explicit Mastra Agent Instance Factory
  */
@@ -71,9 +78,11 @@ export function createAssessorCopilotAgent(model = getMastraLanguageModel()) {
   return new Agent({
     id: 'assessorCopilotAgent',
     name: 'assessorCopilotAgent',
-    description: 'Trợ lý Thẩm định Bồi thường Bảo hiểm Y tế chuyên sâu',
+    description:
+      'Trợ lý Thẩm định Bồi thường Bảo hiểm Y tế chuyên sâu có công cụ tra cứu cơ sở dữ liệu và chiết tính',
     instructions: ASSESSOR_COPILOT_SYSTEM_PROMPT,
     model,
+    tools: copilotApiTools as any,
   });
 }
 
@@ -84,7 +93,7 @@ export const assessorCopilotAgent = createAssessorCopilotAgent();
 
 /**
  * NestJS Injectable Wrapper for Assessor Copilot Agent
- * Integrates RAG retrieval, guardrails, and streaming response
+ * Integrates RAG retrieval, guardrails, database tools, and streaming response
  */
 @Injectable()
 export class AssessorCopilotAgent {
@@ -93,7 +102,7 @@ export class AssessorCopilotAgent {
   constructor(private readonly ragService: PolicyRagService) {}
 
   /**
-   * Conversational QA for Assessor with RAG-grounded policy context
+   * Conversational QA for Assessor with RAG-grounded policy context and API/DB tools
    */
   async answerAssessorQuery(params: {
     query: string;
@@ -109,11 +118,13 @@ export class AssessorCopilotAgent {
       .map(c => `[${c.clauseId}] ${c.title}\n${c.content}`)
       .join('\n\n');
 
-    // 2. Prepare context prompt in strict insurance domain language
-    const prompt = `
+    // 2. Prepare context prompt with PII Masking Guardrail enforced
+    const maskedCccd = maskNationalId(claim.nationalId);
+    const maskedPatient = maskPatientName(claim.patientName);
+    const rawPrompt = `
 THÔNG TIN HỒ SƠ YÊU CẦU BỒI THƯỜNG:
 - Mã hồ sơ: ${claim.claimId}
-- Người được bảo hiểm: ${claim.patientName} (CCCD/CMND: ${claim.nationalId})
+- Người được bảo hiểm (PII Masked): ${maskedPatient} (CCCD/CMND đã mã hóa PII: ${maskedCccd})
 - Chẩn đoán y khoa: ${claim.diagnosisIcd10} - ${claim.diagnosisDescription}
 - Cơ sở y tế điều trị: ${claim.hospitalName}
 - Tổng số tiền đề nghị bồi thường: ${claim.totalRequested.toLocaleString()} VND
@@ -126,25 +137,40 @@ ${
 - Số tiền khấu trừ / đồng chi trả: ${assessmentReport.totalDeductions.toLocaleString()} VND
 - Mức độ tin cậy đánh giá: ${assessmentReport.confidenceScore}%
 - Tóm tắt giám định: ${assessmentReport.executiveSummary}`
-    : 'Hồ sơ chưa thực hiện thẩm định tự động.'
+    : 'Hồ sơ chưa có báo cáo thẩm định sẵn trong bộ nhớ; bạn có thể dùng công cụ getLatestAssessment hoặc getClaimDetails để tra cứu.'
 }
 
-CÁC ĐIỀU KHOẢN HỢP ĐỒNG BẢO HIỂM ÁP DỤNG:
+CÁC ĐIỀU KHOẢN HỢP ĐỒNG BẢO HIỂM LIÊN QUAN:
 ${clauseContext}
+
+HƯỚNG DẪN DÀNH CHO BẠN (AI ASSESSOR COPILOT):
+Bạn có quyền truy cập vào các công cụ (tools) tra cứu dữ liệu ứng dụng:
+- getClaimDetails: Xem chi tiết ngày nằm viện, viện phí, trạng thái hồ sơ.
+- getClaimDocuments: Xem danh mục chứng từ, tính hợp lệ từng file.
+- getClaimItems: Xem từng khoản bóc tách viện phí (tiền phòng, mổ, thuốc, xét nghiệm).
+- getPolicySchedule: Xem bảng quyền lợi, hạn mức năm, danh mục loại trừ ICD-10.
+- getLatestAssessment: Xem báo cáo thẩm định mới nhất của workflow.
+- simulateBenefitCalculation: Mô phỏng lại quyền lợi và số tiền chi trả khi thay đổi tỷ lệ đồng chi trả.
+Hãy chủ động gọi các công cụ này nếu cần thêm số liệu thực tế chính xác để trả lời chuyên viên.
 
 CÂU HỎI TỪ CHUYÊN VIÊN THẨM ĐỊNH:
 "${query}"
 `;
+
+    const prompt = sanitizePiiFromPrompt(rawPrompt, claim.patientName);
 
     try {
       const response = await generateText({
         model: getMastraLanguageModel(),
         system: ASSESSOR_COPILOT_SYSTEM_PROMPT,
         prompt,
+        tools: copilotApiTools,
+        maxSteps: 5,
       });
 
-      // Apply Guardrail Sanitizer to guarantee no internal tech leaks
-      return sanitizeUserFacingText(response.text);
+      // Apply Dual Guardrails: PII Sanitizer + Internal Jargon Sanitizer
+      const piiSanitized = sanitizePiiFromPrompt(response.text, claim.patientName);
+      return sanitizeUserFacingText(piiSanitized);
     } catch (error) {
       this.logger.error('Lỗi kết nối bộ xử lý ngôn ngữ:', error);
       const fallback = `Hệ thống tạm thời không thể kết nối tới dịch vụ trí tuệ nhân tạo.
@@ -155,7 +181,7 @@ ${clauseContext}`;
   }
 
   /**
-   * Stream response for Assessor chat box
+   * Stream response for Assessor chat box with DB/API tools
    */
   async streamAssessorQuery(params: {
     query: string;
@@ -169,19 +195,26 @@ ${clauseContext}`;
       .map(c => `[${c.clauseId}] ${c.title}\n${c.content}`)
       .join('\n\n');
 
-    const prompt = `
-HỒ SƠ BỒI THƯỜNG: ${claim.claimId} | BỆNH NHÂN: ${claim.patientName} | CHẨN ĐOÁN: ${claim.diagnosisIcd10}
+    const maskedPatient = maskPatientName(claim.patientName);
+    const rawPrompt = `
+HỒ SƠ BỒI THƯỜNG: ${claim.claimId} | BỆNH NHÂN (PII MASKED): ${maskedPatient} | CHẨN ĐOÁN: ${claim.diagnosisIcd10}
 ĐIỀU KHOẢN HỢP ĐỒNG LIÊN QUAN:
 ${clauseContext}
 
 KẾT QUẢ THẨM ĐỊNH: ${assessmentReport ? `${assessmentReport.finalRecommendation} - Số tiền chi trả: ${assessmentReport.totalPayable.toLocaleString()} VND` : 'Chưa có'}
+
+Bạn có các công cụ tra cứu số liệu thực tế từ hệ thống (getClaimDetails, getClaimDocuments, getClaimItems, getPolicySchedule, getLatestAssessment, simulateBenefitCalculation).
 CÂU HỎI: "${query}"
 `;
+
+    const prompt = sanitizePiiFromPrompt(rawPrompt, claim.patientName);
 
     return streamText({
       model: getMastraLanguageModel(),
       system: ASSESSOR_COPILOT_SYSTEM_PROMPT,
       prompt,
+      tools: copilotApiTools,
+      maxSteps: 5,
     });
   }
 }

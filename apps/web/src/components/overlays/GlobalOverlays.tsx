@@ -90,7 +90,7 @@ export function GlobalOverlays() {
       <AuditTrailDrawer
         isOpen={isAuditDrawerOpen}
         onClose={closeAuditDrawer}
-        claimId={activeClaimId || 'CLM-2026-001'}
+        claimId={activeClaimId || ''}
       />
 
       {/* Tiếp nhận hồ sơ mới */}

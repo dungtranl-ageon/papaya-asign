@@ -24,8 +24,8 @@ export function RejectClaimModal({
   isOpen,
   onClose,
   onConfirm,
-  claimId = 'CLM-2026-04102',
-  insuredName = 'Trần Thị B',
+  claimId = '',
+  insuredName = '',
 }: RejectClaimModalProps) {
   const [selectedReason, setSelectedReason] = useState('WAITING_PERIOD');
   const [clauseReference, setClauseReference] = useState(

@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, User, Send, Sparkles, RefreshCw, FileText } from 'lucide-react';
 import { PolicyCitationPill } from './PolicyCitationPill';
+import { MarkdownContent } from './MarkdownContent';
+import { maskPatientName } from '@papaya/shared';
 
 export interface ChatMessage {
   id: string;
@@ -36,13 +38,14 @@ export function CopilotChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Generate dynamic initial greeting based on active claim from database
+    // Generate dynamic initial greeting based on active claim from database with PII masked
+    const maskedPatient = maskPatientName(patientName);
     const greeting: ChatMessage = {
       id: `init-${claimId}`,
       role: 'assistant',
       content: `Xin chào! Tôi là Trợ lý Thẩm định AI (Papaya Copilot).
       
-Tôi đang sẵn sàng hỗ trợ bạn rà soát hồ sơ **${claimId}** của khách hàng **${patientName}** (HĐ: **${policyNumber}**).
+Tôi đang sẵn sàng hỗ trợ bạn rà soát hồ sơ **${claimId}** của khách hàng **${maskedPatient}** (HĐ: **${policyNumber}**).
 Bạn có thể hỏi bất kỳ câu hỏi nào về điều khoản loại trừ, thời gian chờ, tỷ lệ đồng chi trả hoặc yêu cầu trích dẫn quy tắc bảo hiểm!`,
       timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     };
@@ -150,13 +153,14 @@ Bạn có thể hỏi bất kỳ câu hỏi nào về điều khoản loại tr�
   };
 
   const resetConversation = () => {
+    const maskedPatient = maskPatientName(patientName);
     setMessages([
       {
         id: `init-${claimId}-${Date.now()}`,
         role: 'assistant',
         content: `Xin chào! Tôi là Trợ lý Thẩm định AI (Papaya Copilot).
         
-Tôi đang sẵn sàng hỗ trợ bạn rà soát hồ sơ **${claimId}** của khách hàng **${patientName}** (HĐ: **${policyNumber}**).
+Tôi đang sẵn sàng hỗ trợ bạn rà soát hồ sơ **${claimId}** của khách hàng **${maskedPatient}** (HĐ: **${policyNumber}**).
 Bạn có thể hỏi bất kỳ câu hỏi nào về điều khoản loại trừ, thời gian chờ, tỷ lệ đồng chi trả hoặc yêu cầu trích dẫn quy tắc bảo hiểm!`,
         timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
       },
@@ -215,7 +219,11 @@ Bạn có thể hỏi bất kỳ câu hỏi nào về điều khoản loại tr�
                   : 'bg-white border border-slate-200/90 text-slate-800 rounded-tl-xs'
               }`}
             >
-              <div className="whitespace-pre-line">{msg.content}</div>
+              <MarkdownContent
+                content={msg.content}
+                isUser={msg.role === 'user'}
+                onOpenPolicyBrowser={onOpenPolicyBrowser}
+              />
 
               {/* Citations list if attached */}
               {msg.citations && msg.citations.length > 0 && (

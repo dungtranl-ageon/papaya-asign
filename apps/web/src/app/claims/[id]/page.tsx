@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, use } from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Zap,
@@ -10,8 +11,11 @@ import {
   RefreshCw,
   CheckCircle2,
   HelpCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useWorkstationStore, useUiStore } from '@/store';
+import { maskPatientName } from '@papaya/shared';
 
 // Dossier Components
 import { MemberPolicyCard } from '@/components/dossier/MemberPolicyCard';
@@ -29,26 +33,26 @@ import { RejectClaimModal } from '@/components/modals/RejectClaimModal';
 import { RequestMoreInfoModal } from '@/components/modals/RequestMoreInfoModal';
 import { ManualOverrideModal } from '@/components/modals/ManualOverrideModal';
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default function ClaimWorkstationPage({ params }: PageProps) {
-  const resolvedParams = use(params);
-  const claimId = resolvedParams.id;
+export default function ClaimWorkstationPage() {
+  const router = useRouter();
+  const routeParams = useParams();
+  const claimId = (routeParams?.id as string) || '';
 
   const {
     claim,
     policy,
     assessment,
+    claimsQueue,
     isLoading,
     isAssessing,
     error,
     approvedAmount,
+    fetchClaimsQueue,
     fetchClaimDetails,
     runMastraAssessment,
     setApprovedAmount,
     updateClaimStatus,
+    updateClaim,
     getDerivedCalculation,
   } = useWorkstationStore();
 
@@ -69,6 +73,17 @@ export default function ClaimWorkstationPage({ params }: PageProps) {
       fetchClaimDetails(claimId);
     }
   }, [claimId, fetchClaimDetails]);
+
+  useEffect(() => {
+    fetchClaimsQueue();
+  }, [fetchClaimsQueue]);
+
+  const currentIndex = claimsQueue.findIndex(c => c.claimId === claimId);
+  const prevClaim = currentIndex > 0 ? claimsQueue[currentIndex - 1] : null;
+  const nextClaim =
+    currentIndex >= 0 && currentIndex < claimsQueue.length - 1
+      ? claimsQueue[currentIndex + 1]
+      : null;
 
   const calculation = getDerivedCalculation();
 
@@ -91,7 +106,7 @@ export default function ClaimWorkstationPage({ params }: PageProps) {
             <span className="font-mono font-bold text-slate-900 text-sm">{claimId}</span>
             <span className="text-slate-400">•</span>
             <span className="font-semibold text-slate-700">
-              {claim?.patientName || 'Đang nạp hồ sơ...'}
+              {claim?.patientName ? maskPatientName(claim.patientName) : 'Đang nạp hồ sơ...'}
             </span>
             <span className="text-slate-400">•</span>
             <span className="font-mono text-slate-500">
@@ -100,12 +115,12 @@ export default function ClaimWorkstationPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Fast Case Switcher & Trigger AI Assessment */}
+        {/* Dynamic Queue Switcher & Trigger AI Assessment */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => runMastraAssessment(claimId)}
             disabled={isAssessing || !claim}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 border border-teal-200 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 border border-teal-200 rounded-xl transition-all disabled:opacity-50 cursor-pointer shadow-2xs"
             title="Chạy lại luồng kiểm định tự động 4 bước Mastra"
           >
             {isAssessing ? (
@@ -118,39 +133,54 @@ export default function ClaimWorkstationPage({ params }: PageProps) {
 
           <div className="h-4 w-px bg-slate-200 hidden sm:block" />
 
-          <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
-            Chuyển nhanh ca mẫu:
-          </span>
-          <Link
-            href="/claims/CLM-2026-001"
-            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all ${
-              claimId === 'CLM-2026-001'
-                ? 'bg-teal-700 text-white border-teal-700 shadow-2xs'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            TC-01 (Ruột thừa)
-          </Link>
-          <Link
-            href="/claims/CLM-2026-002"
-            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all ${
-              claimId === 'CLM-2026-002'
-                ? 'bg-rose-700 text-white border-rose-700 shadow-2xs'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            TC-02 (Thời gian chờ)
-          </Link>
-          <Link
-            href="/claims/CLM-2026-003"
-            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all ${
-              claimId === 'CLM-2026-003'
-                ? 'bg-amber-700 text-white border-amber-700 shadow-2xs'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            TC-03 (Thiếu/Mờ CT)
-          </Link>
+          {/* Dynamic Claims Queue Navigation */}
+          {claimsQueue.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200 text-xs">
+              <button
+                type="button"
+                onClick={() => prevClaim && router.push(`/claims/${prevClaim.claimId}`)}
+                disabled={!prevClaim}
+                className="p-1 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer disabled:cursor-not-allowed"
+                title={
+                  prevClaim
+                    ? `Hồ sơ trước: ${prevClaim.claimId} (${maskPatientName(prevClaim.patientName)})`
+                    : 'Đầu danh sách'
+                }
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+
+              <div className="relative">
+                <select
+                  value={claimId}
+                  onChange={e => router.push(`/claims/${e.target.value}`)}
+                  className="bg-white border border-slate-200/90 hover:border-teal-400 text-slate-800 font-semibold text-[11px] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer max-w-[210px] truncate transition-all"
+                  title="Chuyển hồ sơ trong hàng đợi"
+                >
+                  {claimsQueue.map((item, idx) => (
+                    <option key={item.claimId} value={item.claimId}>
+                      #{idx + 1} {item.claimId} - {maskPatientName(item.patientName)} ({item.status}
+                      )
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => nextClaim && router.push(`/claims/${nextClaim.claimId}`)}
+                disabled={!nextClaim}
+                className="p-1 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer disabled:cursor-not-allowed"
+                title={
+                  nextClaim
+                    ? `Hồ sơ kế tiếp: ${nextClaim.claimId} (${nextClaim.patientName})`
+                    : 'Cuối danh sách'
+                }
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -166,18 +196,32 @@ export default function ClaimWorkstationPage({ params }: PageProps) {
           </span>
         </div>
       ) : error ? (
-        <div className="flex items-center justify-between p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs">
-          <div className="flex items-center gap-2">
-            <AlertOctagon className="h-4 w-4 text-rose-600" />
-            <span className="font-semibold">{error}</span>
+        <div className="p-6 bg-white border border-rose-200 rounded-2xl shadow-2xs space-y-3">
+          <div className="flex items-center gap-2 text-rose-700 text-sm font-bold">
+            <AlertOctagon className="h-5 w-5 text-rose-600" />
+            <span>{error}</span>
           </div>
-          <button
-            onClick={() => fetchClaimDetails(claimId)}
-            className="px-3 py-1.5 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 transition-colors flex items-center gap-1 cursor-pointer"
-          >
-            <RefreshCw className="h-3 w-3" />
-            <span>Thử lại</span>
-          </button>
+          <p className="text-xs text-slate-500">
+            Hồ sơ <strong className="font-mono text-slate-700">{claimId}</strong> chưa tồn tại trong
+            cơ sở dữ liệu SQLite hoặc máy chủ chưa sẵn sàng. Bạn có thể thử nạp lại hoặc quay về
+            danh sách hàng đợi.
+          </p>
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={() => fetchClaimDetails(claimId)}
+              className="px-3.5 py-1.5 bg-teal-700 text-white rounded-xl text-xs font-bold hover:bg-teal-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span>Thử nạp lại</span>
+            </button>
+            <Link
+              href="/claims"
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Quay lại Hàng đợi bồi thường</span>
+            </Link>
+          </div>
         </div>
       ) : claim ? (
         /* DUAL-PANE WORKSTATION GRID */
@@ -187,27 +231,41 @@ export default function ClaimWorkstationPage({ params }: PageProps) {
             {/* 1. Member Policy Card */}
             <MemberPolicyCard claim={claim} policy={policy} />
 
+            {/* 2. Benefit Calculation Card with Real-time Copay Slider */}
+            <BenefitCalculationCard
+              calculation={calculation}
+              annualLimitTotal={policy?.annualTotalLimit || 500000000}
+              onOpenManualOverride={() => setManualOverrideModalOpen(true)}
+              onOpenPolicyBrowser={clauseId => openPolicyDrawer(clauseId)}
+              onUpdateClaimedAmount={async (newAmount: number) => {
+                await updateClaim(claimId, { totalRequested: newAmount });
+              }}
+              onApplyCopay={async (copayPct: number, finalAmount: number) => {
+                setApprovedAmount(finalAmount);
+                await updateClaimStatus(
+                  'OVERRIDDEN',
+                  finalAmount,
+                  `Chuyên viên áp dụng tỷ lệ đồng chi trả Copay điều chỉnh: ${copayPct}%`,
+                );
+              }}
+            />
+            {/* 3. Interactive Document Inspector with High-Fi Canvas */}
+            <DocumentInspector claim={claim} missingTypes={assessment?.missingDocuments} />
+          </div>
+
+          {/* RIGHT PANE: Copilot Workspace & Financial Engine (45% width -> 5 cols) */}
+          <div className="lg:col-span-5 space-y-4">
             {/* 2. Medical Event & Diagnosis Card */}
             <DiagnosisCard
               claim={claim}
               policyExclusions={policy?.exclusions}
               medicalNecessityScore={assessment?.confidenceScore}
             />
-
-            {/* 3. Interactive Document Inspector with High-Fi Canvas */}
-            <DocumentInspector claim={claim} />
-          </div>
-
-          {/* RIGHT PANE: Copilot Workspace & Financial Engine (45% width -> 5 cols) */}
-          <div className="lg:col-span-5 space-y-4">
             {/* 1. Deterministic Mastra Workflow 4-Step Timeline */}
-            <ToolExecutionTimeline steps={assessment?.steps} isAssessing={isAssessing} />
-
-            {/* 2. Benefit Calculation Card with Real-time Copay Slider */}
-            <BenefitCalculationCard
-              calculation={calculation}
-              onOpenManualOverride={() => setManualOverrideModalOpen(true)}
-              onOpenPolicyBrowser={clauseId => openPolicyDrawer(clauseId)}
+            <ToolExecutionTimeline
+              steps={assessment?.steps}
+              isAssessing={isAssessing}
+              onReAssess={() => runMastraAssessment(claimId)}
             />
 
             {/* 3. Copilot AI Interactive Grounded RAG Chat */}
@@ -236,9 +294,17 @@ export default function ClaimWorkstationPage({ params }: PageProps) {
                       <HelpCircle className="h-4 w-4" /> Đang Chờ Bổ sung
                     </span>
                   ) : (
-                    <span className="text-teal-700 flex items-center gap-1 font-extrabold">
-                      <Zap className="h-4 w-4" /> Đang Thẩm định AI
-                    </span>
+                    <button
+                      onClick={() => runMastraAssessment(claimId)}
+                      disabled={isAssessing}
+                      className="text-teal-700 hover:text-teal-800 flex items-center gap-1 font-extrabold cursor-pointer group"
+                      title="Bấm để kích hoạt AI thẩm định lại hồ sơ"
+                    >
+                      <Zap
+                        className={`h-4 w-4 ${isAssessing ? 'animate-bounce text-amber-500' : 'group-hover:scale-110 transition-transform'}`}
+                      />
+                      <span>{isAssessing ? 'Đang Thẩm định AI...' : 'Đang Thẩm định AI'}</span>
+                    </button>
                   )}
                 </span>
               </div>
@@ -318,7 +384,11 @@ export default function ClaimWorkstationPage({ params }: PageProps) {
             originalAmount={calculation.eligibleAmount - calculation.copayAmount}
             onConfirm={async data => {
               setApprovedAmount(data.overriddenAmount);
-              await updateClaimStatus('OVERRIDDEN', data.overriddenAmount);
+              await updateClaimStatus(
+                'OVERRIDDEN',
+                data.overriddenAmount,
+                data.auditNote || data.overrideReason,
+              );
               setManualOverrideModalOpen(false);
             }}
           />

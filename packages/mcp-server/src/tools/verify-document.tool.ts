@@ -24,12 +24,30 @@ export interface VerifyDocumentOutput {
  */
 export async function verifyDocument(input: VerifyDocumentInput): Promise<VerifyDocumentOutput> {
   const presentTypes = new Set<string>(input.documents.map(d => d.docType));
+
+  // Medical proof requirement: either HOSPITAL_DISCHARGE (inpatient) or MEDICAL_RECORD / outpatient consultation book
+  const hasMedicalConsultationProof =
+    presentTypes.has('HOSPITAL_DISCHARGE') ||
+    presentTypes.has('MEDICAL_RECORD') ||
+    input.documents.some(
+      d =>
+        d.fileName?.toLowerCase().includes('so_kham') ||
+        d.fileName?.toLowerCase().includes('giay_ra_vien') ||
+        d.docType?.toLowerCase().includes('kham_benh'),
+    );
+
   const requiredTypes = input.requiredDocTypes ?? [
     'HOSPITAL_DISCHARGE',
     'DETAILED_INVOICE',
     'VAT_INVOICE',
   ];
-  const missingTypes = requiredTypes.filter(req => !presentTypes.has(req));
+
+  const missingTypes = requiredTypes.filter(req => {
+    if (req === 'HOSPITAL_DISCHARGE' && hasMedicalConsultationProof) {
+      return false;
+    }
+    return !presentTypes.has(req);
+  });
 
   const invalidDocuments: Array<{ docId: string; reason: string }> = [];
   let verifiedDocumentsCount = 0;

@@ -37,7 +37,7 @@ describe('Algorithm 4: Pairwise (All-Pairs) Combinatorial Test Suite', () => {
       category: 'MEDICATION',
       docStatus: 'INVALID',
       clinicalType: 'COSMETIC',
-      expectedRecommendation: 'APPROVE', // Notes: If docs present and not missing types
+      expectedRecommendation: 'REQUEST_MORE_INFO', // Document invalid requires more info / re-upload
     },
     {
       id: 'PAIR-04',
@@ -144,7 +144,7 @@ describe('Algorithm 4: Pairwise (All-Pairs) Combinatorial Test Suite', () => {
 
       const report = await executeClaimsAssessmentWorkflow({ claim: testClaim, policy });
 
-      if (tc.docStatus === 'MISSING') {
+      if (tc.docStatus === 'MISSING' || tc.docStatus === 'INVALID') {
         expect(report.finalRecommendation).toBe('REQUEST_MORE_INFO');
       } else if (isExclusion) {
         expect(report.finalRecommendation).toBe('REJECT');

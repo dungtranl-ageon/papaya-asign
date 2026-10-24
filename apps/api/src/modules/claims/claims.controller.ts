@@ -1,6 +1,11 @@
 import { Controller, Get, Post, Patch, Param, Sse, Body } from '@nestjs/common';
-import { ClaimsService, CreateClaimDto, UpdateClaimStatusDto } from './claims.service';
-import { Claim, AssessmentReport } from '@papaya/shared';
+import {
+  ClaimsService,
+  CreateClaimDto,
+  UpdateClaimDto,
+  UpdateClaimStatusDto,
+} from './claims.service';
+import { Claim, AssessmentReport, ClaimDocument } from '@papaya/shared';
 import { AuditLogItem } from '../audit/audit.service';
 import { Observable } from 'rxjs';
 import { SseEventPayload } from '../mastra/mastra.service';
@@ -24,12 +29,31 @@ export class ClaimsController {
     return this.claimsService.createClaim(body);
   }
 
+  @Patch(':id')
+  async updateClaim(@Param('id') id: string, @Body() body: UpdateClaimDto): Promise<Claim> {
+    return this.claimsService.updateClaim(id, body);
+  }
+
   @Patch(':id/status')
   async updateClaimStatus(
     @Param('id') id: string,
     @Body() body: UpdateClaimStatusDto,
   ): Promise<Claim> {
     return this.claimsService.updateClaimStatus(id, body);
+  }
+
+  @Post(':id/documents')
+  async addDocument(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      docType: string;
+      fileName: string;
+      status?: ClaimDocument['status'];
+      notes?: string;
+    },
+  ): Promise<Claim> {
+    return this.claimsService.addDocument(id, body);
   }
 
   @Get(':id/audit')

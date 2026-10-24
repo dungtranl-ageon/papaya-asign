@@ -34,8 +34,8 @@ export function RequestMoreInfoModal({
   isOpen,
   onClose,
   onConfirm,
-  claimId = 'CLM-2026-003',
-  insuredName = 'Tran Thi B',
+  claimId = '',
+  insuredName = '',
   initialMissingDocs,
 }: RequestMoreInfoModalProps) {
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);

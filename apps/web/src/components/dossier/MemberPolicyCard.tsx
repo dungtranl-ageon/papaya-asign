@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
-import { User, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
-import { Claim, Policy } from '@papaya/shared';
+import React, { useState } from 'react';
+import { User, CheckCircle2, AlertTriangle, XCircle, Eye, EyeOff } from 'lucide-react';
+import { Claim, Policy, maskNationalId, maskPatientName } from '@papaya/shared';
 
 interface MemberPolicyCardProps {
   claim: Claim;
@@ -19,6 +19,7 @@ export function MemberPolicyCard({ claim, policy }: MemberPolicyCardProps) {
   );
 
   const isPolicyActive = policy ? policy.status === 'ACTIVE' : true;
+  const [showFullDetails, setShowFullDetails] = useState(false);
 
   return (
     <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs">
@@ -28,10 +29,35 @@ export function MemberPolicyCard({ claim, policy }: MemberPolicyCardProps) {
             <User className="h-4 w-4" />
           </div>
           <div>
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Người được Bảo hiểm
-            </span>
-            <h3 className="font-bold text-slate-900 text-sm">{claim.patientName}</h3>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                Người được Bảo hiểm
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowFullDetails(!showFullDetails)}
+                className="text-slate-400 hover:text-slate-700 transition-colors p-0.5 rounded cursor-pointer"
+                title={
+                  showFullDetails ? 'Che giấu PII (Nghị định 13)' : 'Mở xem thông tin PII đầy đủ'
+                }
+              >
+                {showFullDetails ? (
+                  <EyeOff className="h-3 w-3 text-slate-500" />
+                ) : (
+                  <Eye className="h-3 w-3 text-slate-500" />
+                )}
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-bold text-slate-900 text-sm">
+                {showFullDetails ? claim.patientName : maskPatientName(claim.patientName)}
+              </h3>
+              {!showFullDetails && (
+                <span className="text-[9px] text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded border border-teal-200 font-medium">
+                  PII Safe
+                </span>
+              )}
+            </div>
           </div>
         </div>
         {isPolicyActive ? (
@@ -59,7 +85,17 @@ export function MemberPolicyCard({ claim, policy }: MemberPolicyCardProps) {
         </div>
         <div>
           <span className="text-slate-500 block text-[11px]">CCCD / Định danh:</span>
-          <span className="font-semibold text-slate-800 font-mono">{claim.nationalId}</span>
+          <span className="font-semibold text-slate-800 font-mono flex items-center gap-1">
+            {showFullDetails ? claim.nationalId : maskNationalId(claim.nationalId)}
+            {!showFullDetails && (
+              <span
+                className="text-[10px] text-teal-600 font-sans font-medium"
+                title="Bảo vệ dữ liệu cá nhân theo NĐ 13/2023"
+              >
+                [PII]
+              </span>
+            )}
+          </span>
         </div>
         <div>
           <span className="text-slate-500 block text-[11px]">Chương trình:</span>

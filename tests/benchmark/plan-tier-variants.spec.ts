@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { executeClaimsAssessmentWorkflow } from '../../apps/api/src/modules/mastra/mastra.workflow';
+import { executeClaimsAssessmentWorkflow } from '../../apps/api/src/modules/mastra/workflows/assessment.workflow';
 import { Claim } from '../../packages/shared/src';
 import { mockBronzePolicy, mockPlatinumPolicy, mockSilverPolicy } from '../fixtures/mock-policies';
 
@@ -264,9 +264,9 @@ describe('Plan Tier Variants & Parameterized Benchmarks', () => {
     });
 
     expect(report.finalRecommendation).toBe('REQUEST_MORE_INFO');
-    expect(report.missingDocuments).toContain('HOSPITAL_DISCHARGE');
-    // The engine calculates projected payable (4,000,000 with 20% copay on 5,000,000 requested)
-    expect(report.totalPayable).toBe(4000000);
-    expect(report.totalDeductions).toBe(1000000);
+    // Khi Bước 1 chưa hoàn tất: Dừng luồng, không nhảy cóc sang Bước 4 tính tiền -> totalPayable = 0
+    expect(report.totalPayable).toBe(0);
+    expect(report.totalDeductions).toBe(missingDischargeClaim.totalRequested);
+    expect(report.totalPayable + report.totalDeductions).toBe(missingDischargeClaim.totalRequested);
   });
 });

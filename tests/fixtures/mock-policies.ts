@@ -23,24 +23,32 @@ export const mockGoldPolicy: Policy = {
       maxLimitPerYear: 200000000,
       copayRate: 0.1, // 10%
       subLimitPerDay: 3000000,
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
     {
       category: 'SURGERY',
       maxLimitPerClaim: 50000000,
       maxLimitPerYear: 150000000,
       copayRate: 0.2, // 20%
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
     {
       category: 'MEDICATION',
       maxLimitPerClaim: 15000000,
       maxLimitPerYear: 50000000,
       copayRate: 0.1, // 10%
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
     {
       category: 'LABORATORY',
       maxLimitPerClaim: 10000000,
       maxLimitPerYear: 30000000,
       copayRate: 0.1, // 10%
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
   ],
 };
@@ -67,18 +75,24 @@ export const mockSilverPolicy: Policy = {
       maxLimitPerYear: 80000000,
       copayRate: 0.2, // 20%
       subLimitPerDay: 1500000,
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
     {
       category: 'OUTPATIENT',
       maxLimitPerClaim: 3000000,
       maxLimitPerYear: 15000000,
       copayRate: 0.2, // 20%
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
     {
       category: 'MEDICATION',
       maxLimitPerClaim: 5000000,
       maxLimitPerYear: 20000000,
       copayRate: 0.2, // 20%
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
   ],
 };
@@ -105,18 +119,24 @@ export const mockBronzePolicy: Policy = {
       maxLimitPerYear: 50000000,
       copayRate: 0.3, // 30% copay
       subLimitPerDay: 1000000,
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
     {
       category: 'SURGERY',
       maxLimitPerClaim: 30000000,
       maxLimitPerYear: 60000000,
       copayRate: 0.3, // 30% copay
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
     {
       category: 'MEDICATION',
       maxLimitPerClaim: 5000000,
       maxLimitPerYear: 20000000,
       copayRate: 0.3, // 30% copay
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
   ],
 };
@@ -143,18 +163,24 @@ export const mockPlatinumPolicy: Policy = {
       maxLimitPerYear: 500000000,
       copayRate: 0.0, // 0% copay - 100% covered
       subLimitPerDay: 5000000,
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
     {
       category: 'SURGERY',
       maxLimitPerClaim: 100000000,
       maxLimitPerYear: 400000000,
       copayRate: 0.0, // 0% copay
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
     {
       category: 'MEDICATION',
       maxLimitPerClaim: 30000000,
       maxLimitPerYear: 100000000,
       copayRate: 0.0, // 0% copay
+      waitingPeriodDays: 0,
+      requiresPreAuth: false,
     },
   ],
 };

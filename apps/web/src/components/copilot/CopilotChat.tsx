@@ -38,18 +38,41 @@ export function CopilotChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Generate dynamic initial greeting based on active claim from database with PII masked
-    const maskedPatient = maskPatientName(patientName);
-    const greeting: ChatMessage = {
-      id: `init-${claimId}`,
-      role: 'assistant',
-      content: `Xin chào! Tôi là Trợ lý Thẩm định AI (Papaya Copilot).
+    let isMounted = true;
+    const fetchChatHistory = async () => {
+      try {
+        const res = await fetch(`/api/claims/${claimId}/chat`);
+        if (res.ok) {
+          const data = (await res.json()) as { messages?: ChatMessage[] };
+          if (data.messages && data.messages.length > 0 && isMounted) {
+            setMessages(data.messages);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch chat history, falling back to default greeting:', err);
+      }
+
+      if (isMounted) {
+        const maskedPatient = maskPatientName(patientName);
+        const greeting: ChatMessage = {
+          id: `init-${claimId}`,
+          role: 'assistant',
+          content: `Xin chào! Tôi là Trợ lý Thẩm định AI (Papaya Copilot).
       
 Tôi đang sẵn sàng hỗ trợ bạn rà soát hồ sơ **${claimId}** của khách hàng **${maskedPatient}** (HĐ: **${policyNumber}**).
 Bạn có thể hỏi bất kỳ câu hỏi nào về điều khoản loại trừ, thời gian chờ, tỷ lệ đồng chi trả hoặc yêu cầu trích dẫn quy tắc bảo hiểm!`,
-      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+          timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages([greeting]);
+      }
     };
-    setMessages([greeting]);
+
+    fetchChatHistory();
+
+    return () => {
+      isMounted = false;
+    };
   }, [claimId, patientName, policyNumber]);
 
   const scrollToBottom = () => {
@@ -152,7 +175,12 @@ Bạn có thể hỏi bất kỳ câu hỏi nào về điều khoản loại tr�
     }
   };
 
-  const resetConversation = () => {
+  const resetConversation = async () => {
+    try {
+      await fetch(`/api/claims/${claimId}/chat`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('Failed to clear chat memory on server:', err);
+    }
     const maskedPatient = maskPatientName(patientName);
     setMessages([
       {

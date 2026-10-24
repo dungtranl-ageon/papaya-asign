@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Sse, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Sse, Body } from '@nestjs/common';
 import {
   ClaimsService,
   CreateClaimDto,
@@ -74,6 +74,18 @@ export class ClaimsController {
   @Sse(':id/assess/stream')
   assessClaimStream(@Param('id') id: string): Observable<SseEventPayload> {
     return this.claimsService.assessClaimStream(id);
+  }
+
+  @Get(':id/chat')
+  async getChatHistory(@Param('id') id: string) {
+    const history = await this.claimsService.getChatHistory(id);
+    return { messages: history };
+  }
+
+  @Delete(':id/chat')
+  async clearChatHistory(@Param('id') id: string) {
+    await this.claimsService.clearChatHistory(id);
+    return { success: true };
   }
 
   @Post(':id/chat')

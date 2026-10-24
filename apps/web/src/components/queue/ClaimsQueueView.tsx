@@ -146,7 +146,7 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
             </span>
             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-teal-700 font-medium">
               <Zap className="h-3.5 w-3.5 text-amber-500" />
-              <span>Mastra Engine 4 bước</span>
+              <span>Quy trình 4 bước</span>
             </div>
           </div>
           <div className="p-3 rounded-xl bg-teal-50 text-teal-700">
@@ -266,8 +266,8 @@ export function ClaimsQueueView({ onSelectClaim, onOpenIngestionModal }: ClaimsQ
                 <th className="py-3 px-4">Khách hàng & Thẻ</th>
                 <th className="py-3 px-4">Chẩn đoán & Cơ sở Y tế</th>
                 <th className="py-3 px-4">Chi phí Yêu cầu</th>
-                <th className="py-3 px-4">Đề xuất AI Copilot</th>
-                <th className="py-3 px-4">Quyết định HITL</th>
+                <th className="py-3 px-4">AI Đề xuất</th>
+                <th className="py-3 px-4">Quyết định</th>
                 <th className="py-3 px-4">Hạn SLA</th>
                 <th className="py-3 px-4 text-right">Thao tác</th>
               </tr>

@@ -34,7 +34,20 @@ describe('ClaimsService Unit Tests', () => {
     const mastraService = new MastraService(copilotAgent);
     const auditService = new AuditService(mockPrisma);
 
-    const service = new ClaimsService(mockPrisma, policiesService, mastraService, auditService);
+    const memoryService = {
+      saveMessage: async () => ({}),
+      getRecentMessages: async () => [],
+      clearMessages: async () => {},
+      formatToLlmMessages: () => [],
+    } as any;
+
+    const service = new ClaimsService(
+      mockPrisma,
+      policiesService,
+      mastraService,
+      auditService,
+      memoryService,
+    );
     const claims = await service.listClaims();
 
     expect(claims.length).toBeGreaterThanOrEqual(1);

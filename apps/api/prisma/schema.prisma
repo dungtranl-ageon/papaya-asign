@@ -57,6 +57,7 @@ model Claim {
   policy               Policy        @relation(fields: [policyNumber], references: [policyNumber])
   assessments          Assessment[]
   auditLogs            AuditLog[]
+  chatMessages         ChatMessage[]
 
   @@index([status])
   @@index([diagnosisIcd10])
@@ -106,4 +107,21 @@ model AuditLog {
 
   @@index([claimId, timestamp])
   @@map("audit_logs")
+}
+
+// ------------------------------------------------------------------------------
+// Conversation Memory for Assessor Copilot Agent
+// ------------------------------------------------------------------------------
+model ChatMessage {
+  id            String   @id @default(uuid())
+  claimId       String
+  role          String   // 'user' | 'assistant' | 'system'
+  content       String
+  citationsJson String   @default("[]") // JSON array of cited clauses
+  createdAt     DateTime @default(now())
+
+  claim         Claim    @relation(fields: [claimId], references: [claimId])
+
+  @@index([claimId, createdAt])
+  @@map("chat_messages")
 }

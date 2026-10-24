@@ -4,6 +4,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { generateText, streamText } from 'ai';
 import { ASSESSOR_COPILOT_SYSTEM_PROMPT } from '../prompts/assessor.prompts';
 import { PolicyRagService } from '../rag/policy-rag.service';
+import { ConversationMemoryService } from '../memory/conversation-memory.service';
 import { Claim, Policy, AssessmentReport } from '@papaya/shared';
 import { sanitizeUserFacingText } from '../guardrails/jargon-filter.guardrail';
 import {
@@ -93,16 +94,19 @@ export const assessorCopilotAgent = createAssessorCopilotAgent();
 
 /**
  * NestJS Injectable Wrapper for Assessor Copilot Agent
- * Integrates RAG retrieval, guardrails, database tools, and streaming response
+ * Integrates RAG retrieval, guardrails, database tools, memory and streaming response
  */
 @Injectable()
 export class AssessorCopilotAgent {
   private readonly logger = new Logger(AssessorCopilotAgent.name);
 
-  constructor(private readonly ragService: PolicyRagService) {}
+  constructor(
+    private readonly ragService: PolicyRagService,
+    private readonly memoryService?: ConversationMemoryService,
+  ) {}
 
   /**
-   * Conversational QA for Assessor with RAG-grounded policy context and API/DB tools
+   * Conversational QA for Assessor with RAG-grounded policy context, memory and API/DB tools
    */
   async answerAssessorQuery(params: {
     query: string;
@@ -111,6 +115,20 @@ export class AssessorCopilotAgent {
     assessmentReport?: AssessmentReport;
   }): Promise<string> {
     const { query, claim, policy, assessmentReport } = params;
+
+    // 1. Persist the current incoming user query into claim-scoped memory
+    if (this.memoryService) {
+      await this.memoryService.saveMessage({
+        claimId: claim.claimId,
+        role: 'user',
+        content: query,
+      });
+    }
+
+    // 2. Retrieve multi-turn conversation history for sliding window memory
+    const history = this.memoryService
+      ? await this.memoryService.getRecentMessages(claim.claimId, 10)
+      : [];
 
     // 1. RAG retrieval of relevant policy clauses
     const relevantClauses = await this.ragService.retrieveClauses(policy, query);
@@ -160,28 +178,64 @@ CÂU HỎI TỪ CHUYÊN VIÊN THẨM ĐỊNH:
     const prompt = sanitizePiiFromPrompt(rawPrompt, claim.patientName);
 
     try {
-      const response = await generateText({
-        model: getMastraLanguageModel(),
-        system: ASSESSOR_COPILOT_SYSTEM_PROMPT,
-        prompt,
-        tools: copilotApiTools,
-        maxSteps: 5,
-      });
+      let response;
+      if (this.memoryService && history.length > 0) {
+        const fullSystem = `${ASSESSOR_COPILOT_SYSTEM_PROMPT}\n\n${prompt}`;
+        const llmMessages = this.memoryService.formatToLlmMessages({
+          systemPrompt: fullSystem,
+          history,
+          currentQuery: query,
+        });
+
+        response = await generateText({
+          model: getMastraLanguageModel(),
+          messages: llmMessages,
+          tools: copilotApiTools,
+          maxSteps: 5,
+        });
+      } else {
+        response = await generateText({
+          model: getMastraLanguageModel(),
+          system: ASSESSOR_COPILOT_SYSTEM_PROMPT,
+          prompt,
+          tools: copilotApiTools,
+          maxSteps: 5,
+        });
+      }
 
       // Apply Dual Guardrails: PII Sanitizer + Internal Jargon Sanitizer
       const piiSanitized = sanitizePiiFromPrompt(response.text, claim.patientName);
-      return sanitizeUserFacingText(piiSanitized);
+      const finalReply = sanitizeUserFacingText(piiSanitized);
+
+      // Persist assistant reply to conversation memory
+      if (this.memoryService) {
+        await this.memoryService.saveMessage({
+          claimId: claim.claimId,
+          role: 'assistant',
+          content: finalReply,
+        });
+      }
+
+      return finalReply;
     } catch (error) {
       this.logger.error('Lỗi kết nối bộ xử lý ngôn ngữ:', error);
       const fallback = `Hệ thống tạm thời không thể kết nối tới dịch vụ trí tuệ nhân tạo.
 Dưới đây là các điều khoản hợp đồng tra cứu tự động cho câu hỏi của bạn:
 ${clauseContext}`;
-      return sanitizeUserFacingText(fallback);
+      const finalFallback = sanitizeUserFacingText(fallback);
+      if (this.memoryService) {
+        await this.memoryService.saveMessage({
+          claimId: claim.claimId,
+          role: 'assistant',
+          content: finalFallback,
+        });
+      }
+      return finalFallback;
     }
   }
 
   /**
-   * Stream response for Assessor chat box with DB/API tools
+   * Stream response for Assessor chat box with DB/API tools and conversation memory
    */
   async streamAssessorQuery(params: {
     query: string;
@@ -190,6 +244,20 @@ ${clauseContext}`;
     assessmentReport?: AssessmentReport;
   }) {
     const { query, claim, policy, assessmentReport } = params;
+
+    // Persist user query to memory
+    if (this.memoryService) {
+      await this.memoryService.saveMessage({
+        claimId: claim.claimId,
+        role: 'user',
+        content: query,
+      });
+    }
+
+    const history = this.memoryService
+      ? await this.memoryService.getRecentMessages(claim.claimId, 10)
+      : [];
+
     const relevantClauses = await this.ragService.retrieveClauses(policy, query);
     const clauseContext = relevantClauses
       .map(c => `[${c.clauseId}] ${c.title}\n${c.content}`)
@@ -208,6 +276,22 @@ CÂU HỎI: "${query}"
 `;
 
     const prompt = sanitizePiiFromPrompt(rawPrompt, claim.patientName);
+
+    if (this.memoryService && history.length > 0) {
+      const fullSystem = `${ASSESSOR_COPILOT_SYSTEM_PROMPT}\n\n${prompt}`;
+      const llmMessages = this.memoryService.formatToLlmMessages({
+        systemPrompt: fullSystem,
+        history,
+        currentQuery: query,
+      });
+
+      return streamText({
+        model: getMastraLanguageModel(),
+        messages: llmMessages,
+        tools: copilotApiTools,
+        maxSteps: 5,
+      });
+    }
 
     return streamText({
       model: getMastraLanguageModel(),

@@ -70,6 +70,8 @@ export interface UpdateClaimDto {
   }>;
 }
 
+import { ConversationMemoryService } from '../mastra/memory/conversation-memory.service';
+
 @Injectable()
 export class ClaimsService {
   private readonly logger = new Logger(ClaimsService.name);
@@ -80,6 +82,7 @@ export class ClaimsService {
     private readonly policiesService: PoliciesService,
     private readonly mastraService: MastraService,
     private readonly auditService: AuditService,
+    private readonly memoryService: ConversationMemoryService,
   ) {
     const candidates = [
       path.resolve(process.cwd(), 'data/fixtures'),
@@ -567,6 +570,40 @@ export class ClaimsService {
       policy,
       assessmentReport,
     });
+  }
+
+  async getChatHistory(claimId: string): Promise<
+    Array<{
+      id: string;
+      role: 'user' | 'assistant' | 'system';
+      content: string;
+      citations?: any[];
+      timestamp: string;
+    }>
+  > {
+    const records = await this.memoryService.getRecentMessages(claimId, 50);
+    return records.map(r => {
+      let citations = [];
+      try {
+        citations = JSON.parse(r.citationsJson || '[]');
+      } catch {
+        citations = [];
+      }
+      return {
+        id: r.id,
+        role: r.role,
+        content: r.content,
+        citations,
+        timestamp: new Date(r.createdAt).toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      };
+    });
+  }
+
+  async clearChatHistory(claimId: string): Promise<void> {
+    await this.memoryService.clearMessages(claimId);
   }
 
   private mapDbToClaim(r: {
